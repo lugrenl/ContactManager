@@ -1,0 +1,92 @@
+<configuration>
+
+    <property name="PROJECT_DIR" value="C:/Users/ad/IdeaProjects/SpringWEB_Test/log"/>
+    <property name="INFO_LOG_FILE" value="${PROJECT_DIR}/info.log"/>
+    <property name="DEBUG_LOG_FILE" value="${PROJECT_DIR}/debug.log"/>
+    <property name="TRACE_LOG_FILE" value="${PROJECT_DIR}/trace.log"/>
+
+    <!-- INFO appender -->
+    <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${INFO_LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${PROJECT_DIR}/info.%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+            <!-- Максимальный размер файла перед ротацией -->
+            <maxFileSize>1MB</maxFileSize>
+            <!-- Максимальное количество архивных файлов -->
+            <maxHistory>31</maxHistory>
+            <!-- Общий размер всех архивных файлов -->
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- DEBUG appender -->
+    <appender name="DEBUG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${DEBUG_LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${PROJECT_DIR}/debug.%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+            <!-- Максимальный размер файла перед ротацией -->
+            <maxFileSize>1MB</maxFileSize>
+            <!-- Максимальное количество архивных файлов -->
+            <maxHistory>31</maxHistory>
+            <!-- Общий размер всех архивных файлов -->
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- TRACE appender -->
+    <appender name="TRACE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${TRACE_LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${PROJECT_DIR}/trace.%d{yyyy-MM-dd}-%i.log</fileNamePattern>
+            <!-- Максимальный размер файла перед ротацией -->
+            <maxFileSize>1MB</maxFileSize>
+            <!-- Максимальное количество архивных файлов -->
+            <maxHistory>31</maxHistory>
+            <!-- Общий размер всех архивных файлов -->
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>TRACE</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- Настройка логирования для Hibernate -->
+    <logger name="org.hibernate" level="INFO"/>
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicTypeDescriptor" level="TRACE"/>
+    <logger name="org.hibernate.type" level="TRACE"/>
+
+    <!-- Настройка логирования для Spring Framework -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.springframework.web" level="DEBUG"/>
+    <logger name="org.springframework.beans" level="DEBUG"/>
+    <logger name="org.springframework.context" level="DEBUG"/>
+
+    <root level="DEBUG">
+        <appender-ref ref="INFO_FILE"/>
+        <appender-ref ref="DEBUG_FILE"/>
+        <appender-ref ref="TRACE_FILE"/>
+    </root>
+
+</configuration>
