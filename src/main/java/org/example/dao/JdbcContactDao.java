@@ -74,14 +74,6 @@ public class JdbcContactDao implements ContactDao {
     }
 
     @Override
-    public Contact addContactReturnContact(String name, String surname, String email, String phoneNumber) {
-        Contact contact = new Contact(name, surname, email, phoneNumber);
-        long contactId = addContact(contact);
-        contact.setId(contactId);
-        return contact;
-    }
-
-    @Override
     public void updateEmail(long contactId, String email) {
         namedJdbcTemplate.update(UPDATE_EMAIL, new MapSqlParameterSource("id", contactId).addValue("email", email));
     }

@@ -1,8 +1,9 @@
 package org.example.facade;
 
-import org.example.controller.ContactDto;
+import org.example.dto.ContactDto;
 import org.example.dao.ContactDao;
 
+import org.example.model.Contact;
 import org.example.service.ContactService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,8 @@ public class ContactFacade {
         this.contactService = contactService;
     }
 
-    public ContactDto addContact(String name, String surname, String email, String phoneNumber) {
-        return new ContactDto(contactDao.addContactReturnContact(name, surname, email, phoneNumber));
+    public long addContact(Contact contact) {
+        return contactDao.addContact(contact);
     }
 
     public ContactDto getContact(long contactId) {

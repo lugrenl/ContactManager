@@ -1,5 +1,6 @@
 package org.example.dao;
 
+import org.example.dto.ContactDto;
 import org.example.exceptions.ContactNotFoundException;
 import org.example.model.Contact;
 import org.hibernate.SessionFactory;
@@ -19,14 +20,6 @@ public class HibernateContactDao implements ContactDao {
     @Autowired
     public HibernateContactDao(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
-    }
-
-    @Override
-    @Transactional
-    public Contact addContactReturnContact(String name, String surname, String email, String phoneNumber) {
-        Contact contact = new Contact(name, surname, email, phoneNumber);
-        addContact(contact);
-        return contact;
     }
 
     @Override

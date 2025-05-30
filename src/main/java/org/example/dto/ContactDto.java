@@ -1,31 +1,27 @@
-package org.example.controller;
+package org.example.dto;
 
 import org.example.model.Contact;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ContactDto {
-    @JsonProperty("contactId")
-    private final long contactId;
     @JsonProperty("name")
-    private final String name;
+    private  String name;
     @JsonProperty("surname")
-    private final String surname;
+    private String surname;
     @JsonProperty("email")
-    private final String email;
+    private String email;
     @JsonProperty("phoneNumber")
-    private final String phoneNumber;
+    private String phoneNumber;
+
+    public ContactDto() {
+    }
 
     public ContactDto(Contact contact) {
-        this.contactId = contact.getId();
         this.name = contact.getName();
         this.surname = contact.getSurname();
         this.email = contact.getEmail();
         this.phoneNumber = contact.getPhoneNumber();
-    }
-
-    public long getContactId() {
-        return contactId;
     }
 
     public String getName() {
@@ -42,5 +38,21 @@ public class ContactDto {
 
     public String getPhoneNumber() {
         return phoneNumber;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setSurname(String surname) {
+        this.surname = surname;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

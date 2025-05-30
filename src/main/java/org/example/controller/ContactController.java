@@ -1,6 +1,8 @@
 package org.example.controller;
 
+import org.example.dto.ContactDto;
 import org.example.facade.ContactFacade;
+import org.example.model.Contact;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +18,11 @@ public class ContactController {
         this.contactFacade = contactFacade;
     }
 
+    // Возвращает id добавленного контакта
     @PostMapping
-    public ContactDto addContact(
-            @RequestParam("name") String name,
-            @RequestParam("surname") String surname,
-            @RequestParam("email") String email,
-            @RequestParam("phoneNumber") String phoneNumber
-    ) {
-        return contactFacade.addContact(name, surname, email, phoneNumber);
+    public long addContact(@RequestBody ContactDto contactDto) {
+        Contact contact = new Contact(contactDto.getName(), contactDto.getSurname(), contactDto.getEmail(), contactDto.getPhoneNumber());
+        return contactFacade.addContact(contact);
     }
 
     @GetMapping("/{contactId}")
