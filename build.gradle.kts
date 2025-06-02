@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web
-    implementation("org.springframework.boot:spring-boot-starter-web:3.3.5")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.5.0")
     // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jdbc
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc:3.4.1")
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
