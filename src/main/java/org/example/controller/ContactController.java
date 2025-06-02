@@ -3,6 +3,7 @@ package org.example.controller;
 import org.example.dto.ContactDto;
 import org.example.facade.ContactFacade;
 import org.example.model.Contact;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,16 +13,18 @@ import java.util.List;
 @RequestMapping("/contacts")
 public class ContactController {
     private final ContactFacade contactFacade;
+    private final ModelMapper modelMapper;
 
     @Autowired
-    public ContactController(ContactFacade contactFacade) {
+    public ContactController(ContactFacade contactFacade, ModelMapper modelMapper) {
         this.contactFacade = contactFacade;
+        this.modelMapper = modelMapper;
     }
 
     // Возвращает id добавленного контакта
     @PostMapping
     public long addContact(@RequestBody ContactDto contactDto) {
-        Contact contact = new Contact(contactDto.getName(), contactDto.getSurname(), contactDto.getEmail(), contactDto.getPhoneNumber());
+        Contact contact = convertToContact(contactDto);
         return contactFacade.addContact(contact);
     }
 
@@ -65,4 +68,8 @@ public class ContactController {
 
     @PostMapping("/import")
     public void saveAll (@RequestParam("filePath") String filePath) { contactFacade.saveAll(filePath); }
+
+    private Contact convertToContact(ContactDto contactDto) {
+        return this.modelMapper.map(contactDto, Contact.class);
+    }
 }
