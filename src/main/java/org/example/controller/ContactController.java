@@ -42,15 +42,10 @@ public class ContactController {
         return contactFacade.getAllContacts();
     }
 
-    @PutMapping("/{contactId}/{name}/{surname}/{email}/{phoneNumber}")
-    public ContactDto updateContact(
-            @PathVariable("contactId") long contactId,
-            @PathVariable("name") String name,
-            @PathVariable("surname") String surname,
-            @PathVariable("email") String email,
-            @PathVariable("phoneNumber") String phoneNumber
-    ) {
-        return contactFacade.updateContact(contactId, name, surname, email, phoneNumber);
+    @PutMapping("/{contactId}")
+    public ContactDto updateContact(@PathVariable("contactId") long contactId, @RequestBody ContactDto contactDto) {
+        Contact contact = convertToContact(contactDto);
+        return contactFacade.updateContact(contactId, contact);
     }
 
     @PutMapping("/email/{contactId}/{email}")

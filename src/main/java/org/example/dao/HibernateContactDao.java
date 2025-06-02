@@ -54,15 +54,15 @@ public class HibernateContactDao implements ContactDao {
 
     @Override
     @Transactional
-    public Contact updateContact(long contactId, String name, String surname, String email, String phoneNumber) {
+    public Contact updateContact(long contactId, Contact contactToUpdate) throws ContactNotFoundException {
         try(var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
             var contact = session.get(Contact.class, contactId);
             if (contact != null) {
-                contact.setName(name);
-                contact.setSurname(surname);
-                contact.setEmail(email);
-                contact.setPhoneNumber(phoneNumber);
+                contact.setName(contactToUpdate.getName());
+                contact.setSurname(contactToUpdate.getSurname());
+                contact.setEmail(contactToUpdate.getEmail());
+                contact.setPhoneNumber(contactToUpdate.getPhoneNumber());
             } else {
                 throw new ContactNotFoundException("Contact not found: " + contactId);
             }

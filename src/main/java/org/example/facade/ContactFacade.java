@@ -36,8 +36,8 @@ public class ContactFacade {
         return contactDao.getAllContacts().stream().map(ContactDto::new).toList();
     }
 
-    public ContactDto updateContact(long contactId, String name, String surname, String email, String phoneNumber) {
-        return new ContactDto(contactDao.updateContact(contactId, name, surname, email, phoneNumber));
+    public ContactDto updateContact(long contactId, Contact contact) throws ContactNotFoundException {
+        return new ContactDto(contactDao.updateContact(contactId, contact));
     }
 
     public void updateEmail(long contactId, String email) {

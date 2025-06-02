@@ -47,14 +47,14 @@ public class JdbcContactDao implements ContactDao {
     }
 
     @Override
-    public Contact updateContact(long contactId, String name, String surname, String email, String phoneNumber) {
+    public Contact updateContact(long contactId, Contact contactToUpdate) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         var args = new MapSqlParameterSource()
                 .addValue("id", contactId)
-                .addValue("name", name)
-                .addValue("surname", surname)
-                .addValue("email", email)
-                .addValue("phoneNumber", phoneNumber);
+                .addValue("name", contactToUpdate.getName())
+                .addValue("surname", contactToUpdate.getSurname())
+                .addValue("email", contactToUpdate.getEmail())
+                .addValue("phoneNumber", contactToUpdate.getPhoneNumber());
 
         namedJdbcTemplate.update(UPDATE_CONTACT, args, keyHolder, new String[] { "id" });
 

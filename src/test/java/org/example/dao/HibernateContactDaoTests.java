@@ -113,12 +113,9 @@ public record HibernateContactDaoTests(@Autowired ContactDao contactDao) {
         var contact = new Contact("Name", "Surname", "email", "phonenumber");
         var contactId = contactDao.addContact(contact);
 
-        var newName = "NewName";
-        var newSurname = "NewSurname";
-        var newEmail = "newemail";
-        var newPhoneNumber = "newphonenumber";
+        var contactToUpdate = new Contact(contactId, "NewName", "NewSurname", "Newemail", "newphonenumber");
 
-        var updatedContact = contactDao.updateContact(contactId, newName, newSurname, newEmail, newPhoneNumber);
-        assertThat(updatedContact).isEqualTo(new Contact(contactId, newName, newSurname, newEmail, newPhoneNumber));
+        var updatedContact = contactDao.updateContact(contactId, contactToUpdate);
+        assertThat(updatedContact).isEqualTo(new Contact(contactId, "NewName", "NewSurname", "Newemail", "newphonenumber"));
     }
 }
