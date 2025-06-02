@@ -39,7 +39,7 @@ public class HibernateContactDao implements ContactDao {
 
     @Override
     @Transactional(readOnly = true)
-    public Contact getContact(long contactId) throws ContactNotFoundException {
+    public Contact getContact(long contactId) {
         try (Session session = sessionFactory.openSession()) {
             Contact contact = session.get(Contact.class, contactId);
             if (contact == null) {
@@ -54,7 +54,7 @@ public class HibernateContactDao implements ContactDao {
 
     @Override
     @Transactional
-    public Contact updateContact(long contactId, Contact contactToUpdate) throws ContactNotFoundException {
+    public Contact updateContact(long contactId, Contact contactToUpdate) {
         try(var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
             var contact = session.get(Contact.class, contactId);
@@ -118,7 +118,7 @@ public class HibernateContactDao implements ContactDao {
             if (contact != null) {
                 session.remove(contact);
             } else {
-                throw new ContactNotFoundException("Contact not found: " + contactId);
+                throw new ContactNotFoundException("Contact not found with ID: " + contactId);
             }
             transaction.commit();
         }

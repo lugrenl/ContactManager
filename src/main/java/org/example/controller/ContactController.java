@@ -64,8 +64,10 @@ public class ContactController {
         contactFacade.updatePhoneNumber(contactId, phoneNumber);
     }
 
-    @DeleteMapping("/delete/{contactId}")
-    public void deleteContact(@PathVariable("contactId") long contactId) { contactFacade.deleteContact(contactId); }
+    @DeleteMapping("/{contactId}")
+    public void deleteContact(@PathVariable("contactId") long contactId) {
+        contactFacade.deleteContact(contactId);
+    }
 
     @PostMapping("/import")
     public void saveAll (@RequestParam("filePath") String filePath) { contactFacade.saveAll(filePath); }
