@@ -1,10 +1,14 @@
 package org.example.controller;
 
 import org.example.dto.ContactDto;
+import org.example.exceptions.ContactNotFoundException;
 import org.example.facade.ContactFacade;
 import org.example.model.Contact;
+import org.example.util.ContactErrorResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,7 +38,9 @@ public class ContactController {
     }
 
     @GetMapping
-    public List<ContactDto> getAllContacts() { return contactFacade.getAllContacts(); }
+    public List<ContactDto> getAllContacts() {
+        return contactFacade.getAllContacts();
+    }
 
     @PutMapping("/{contactId}/{name}/{surname}/{email}/{phoneNumber}")
     public ContactDto updateContact(
@@ -71,5 +77,11 @@ public class ContactController {
 
     private Contact convertToContact(ContactDto contactDto) {
         return this.modelMapper.map(contactDto, Contact.class);
+    }
+
+    @ExceptionHandler({ContactNotFoundException.class})
+    private ResponseEntity<ContactErrorResponse> handleContactNotFoundException(ContactNotFoundException e) {
+        ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 }

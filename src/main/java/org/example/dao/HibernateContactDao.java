@@ -1,11 +1,14 @@
 package org.example.dao;
 
-import org.example.dto.ContactDto;
+import lombok.extern.slf4j.Slf4j;
 import org.example.exceptions.ContactNotFoundException;
 import org.example.model.Contact;
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Primary
+@Slf4j
 @Component
 public class HibernateContactDao implements ContactDao {
     private final SessionFactory sessionFactory;
@@ -35,9 +39,16 @@ public class HibernateContactDao implements ContactDao {
 
     @Override
     @Transactional(readOnly = true)
-    public Contact getContact(long contactId) {
-        try(var session = sessionFactory.openSession()) {
-            return session.get(Contact.class, contactId);
+    public Contact getContact(long contactId) throws ContactNotFoundException {
+        try (Session session = sessionFactory.openSession()) {
+            Contact contact = session.get(Contact.class, contactId);
+            if (contact == null) {
+                throw new ContactNotFoundException("Contact not found with ID: " + contactId);
+            }
+            return contact;
+        } catch (HibernateException e) {
+            log.error("Database error while fetching contact ID: {}", contactId, e);
+            throw new DataAccessResourceFailureException("Failed to retrieve contact with ID: " + contactId, e);
         }
     }
 

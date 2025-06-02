@@ -3,6 +3,7 @@ package org.example.facade;
 import org.example.dto.ContactDto;
 import org.example.dao.ContactDao;
 
+import org.example.exceptions.ContactNotFoundException;
 import org.example.model.Contact;
 import org.example.service.ContactService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,11 @@ public class ContactFacade {
     }
 
     public long addContact(Contact contact) {
+
         return contactDao.addContact(contact);
     }
 
-    public ContactDto getContact(long contactId) {
+    public ContactDto getContact(long contactId) throws ContactNotFoundException {
         return new ContactDto(contactDao.getContact(contactId));
     }
 
