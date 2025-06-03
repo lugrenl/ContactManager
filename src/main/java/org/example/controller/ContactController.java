@@ -1,14 +1,11 @@
 package org.example.controller;
 
+import jakarta.validation.Valid;
 import org.example.dto.ContactDto;
-import org.example.exceptions.ContactNotFoundException;
 import org.example.facade.ContactFacade;
 import org.example.model.Contact;
-import org.example.util.ContactErrorResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,7 +23,7 @@ public class ContactController {
     }
 
     @PostMapping
-    public long addContact(@RequestBody ContactDto contactDto) {
+    public long addContact(@RequestBody @Valid ContactDto contactDto) {
         Contact contact = convertToContact(contactDto);
         return contactFacade.addContact(contact);
     }
@@ -42,7 +39,8 @@ public class ContactController {
     }
 
     @PutMapping("/{contactId}")
-    public ContactDto updateContact(@PathVariable("contactId") long contactId, @RequestBody ContactDto contactDto) {
+    public ContactDto updateContact(@PathVariable("contactId") long contactId,
+                                    @RequestBody @Valid ContactDto contactDto) {
         Contact contact = convertToContact(contactDto);
         return contactFacade.updateContact(contactId, contact);
     }
@@ -59,11 +57,5 @@ public class ContactController {
 
     private Contact convertToContact(ContactDto contactDto) {
         return this.modelMapper.map(contactDto, Contact.class);
-    }
-
-    @ExceptionHandler({ContactNotFoundException.class})
-    private ResponseEntity<ContactErrorResponse> handleContactNotFoundException(ContactNotFoundException e) {
-        ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 }
