@@ -25,7 +25,6 @@ public class ContactController {
         this.modelMapper = modelMapper;
     }
 
-    // Возвращает id добавленного контакта
     @PostMapping
     public long addContact(@RequestBody ContactDto contactDto) {
         Contact contact = convertToContact(contactDto);
@@ -48,29 +47,15 @@ public class ContactController {
         return contactFacade.updateContact(contactId, contact);
     }
 
-    @PutMapping("/email/{contactId}/{email}")
-    public void updateEmail(
-            @PathVariable("contactId") long contactId,
-            @PathVariable("email") String email
-    ) {
-        contactFacade.updateEmail(contactId, email);
-    }
-
-    @PutMapping("/phone/{contactId}/{phoneNumber}")
-    public void updatePhoneNumber(
-            @PathVariable("contactId") long contactId,
-            @PathVariable("phoneNumber") String phoneNumber
-    ) {
-        contactFacade.updatePhoneNumber(contactId, phoneNumber);
-    }
-
     @DeleteMapping("/{contactId}")
     public void deleteContact(@PathVariable("contactId") long contactId) {
         contactFacade.deleteContact(contactId);
     }
 
     @PostMapping("/import")
-    public void saveAll (@RequestParam("filePath") String filePath) { contactFacade.saveAll(filePath); }
+    public void saveAll (@RequestParam("filePath") String filePath) {
+        contactFacade.saveAll(filePath);
+    }
 
     private Contact convertToContact(ContactDto contactDto) {
         return this.modelMapper.map(contactDto, Contact.class);

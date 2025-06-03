@@ -23,7 +23,6 @@ public class ContactFacade {
     }
 
     public long addContact(Contact contact) {
-
         return contactDao.addContact(contact);
     }
 
@@ -37,14 +36,6 @@ public class ContactFacade {
 
     public ContactDto updateContact(long contactId, Contact contact) {
         return new ContactDto(contactDao.updateContact(contactId, contact));
-    }
-
-    public void updateEmail(long contactId, String email) {
-        contactDao.updateEmail(contactId, email);
-    }
-
-    public void updatePhoneNumber(long contactId, String phoneNumber) {
-        contactDao.updatePhoneNumber(contactId, phoneNumber);
     }
 
     public void deleteContact(long contactId) {

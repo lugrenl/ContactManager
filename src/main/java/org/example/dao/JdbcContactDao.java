@@ -20,8 +20,6 @@ public class JdbcContactDao implements ContactDao {
     private static final String GET_CONTACT_BY_ID = GET_ALL_CONTACTS + " WHERE ID = :id";
     private static final String SAVE_CONTACT = "INSERT INTO CONTACT (NAME, SURNAME, EMAIL, PHONE_NUMBER) VALUES (:name, :surname, :email, :phoneNumber)";
     private static final String UPDATE_CONTACT = "UPDATE CONTACT SET NAME = :name, SURNAME = :surname, EMAIL = :email, PHONE_NUMBER = :phoneNumber WHERE ID = :id";
-    private static final String UPDATE_EMAIL = "UPDATE CONTACT SET EMAIL = :email WHERE ID = :id";
-    private static final String UPDATE_PHONE_NUMBER = "UPDATE CONTACT SET PHONE_NUMBER = :phoneNumber WHERE ID = :id";
     private static final String DELETE_CONTACT = "DELETE FROM CONTACT WHERE ID = :id";
 
     private static final RowMapper<Contact> CONTACT_ROW_MAPPER =
@@ -34,7 +32,9 @@ public class JdbcContactDao implements ContactDao {
 
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
 
-    public JdbcContactDao(NamedParameterJdbcTemplate namedJdbcTemplate) { this.namedJdbcTemplate = namedJdbcTemplate; }
+    public JdbcContactDao(NamedParameterJdbcTemplate namedJdbcTemplate) {
+        this.namedJdbcTemplate = namedJdbcTemplate;
+    }
 
     @Override
     public List<Contact> getAllContacts() {
@@ -71,16 +71,6 @@ public class JdbcContactDao implements ContactDao {
 
         namedJdbcTemplate.update(SAVE_CONTACT, args, keyHolder, new String[] { "id" });
         return Objects.requireNonNull(keyHolder.getKey()).longValue();
-    }
-
-    @Override
-    public void updateEmail(long contactId, String email) {
-        namedJdbcTemplate.update(UPDATE_EMAIL, new MapSqlParameterSource("id", contactId).addValue("email", email));
-    }
-
-    @Override
-    public void updatePhoneNumber(long contactId, String phoneNumber) {
-        namedJdbcTemplate.update(UPDATE_PHONE_NUMBER, new MapSqlParameterSource("id", contactId).addValue("phoneNumber", phoneNumber));
     }
 
     @Override

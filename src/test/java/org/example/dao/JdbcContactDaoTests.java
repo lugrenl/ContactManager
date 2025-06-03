@@ -1,6 +1,7 @@
 package org.example.dao;
 
 import org.example.config.ContactsManagerConfig;
+import org.example.exceptions.ContactNotFoundException;
 import org.example.model.Contact;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,6 +11,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
@@ -60,40 +62,15 @@ public record JdbcContactDaoTests(@Autowired ContactDao contactDao) {
     }
 
     @Test
-    void updatePhoneNumber() {
-        var contact = new Contact("Jekyll", "Hide", "jhide@gmail.com", "");
-        var contactId = contactDao.addContact(contact);
-
-        var newPhone = "777-77-77";
-        contactDao.updatePhoneNumber(contactId, newPhone);
-
-        var updatedContact = contactDao.getContact(contactId);
-
-        assertThat(updatedContact.getPhoneNumber()).isEqualTo(newPhone);
-    }
-
-    @Test
-    void updateEmail() {
-        var contact = new Contact("Captain", "America", "", "");
-        var contactId = contactDao.addContact(contact);
-
-        var newEmail = "cap@gmail.com";
-        contactDao.updateEmail(contactId, newEmail);
-
-        var updatedContact = contactDao.getContact(contactId);
-
-        assertThat(updatedContact.getEmail()).isEqualTo(newEmail);
-    }
-
-    @Test
     void deleteContact() {
         var contact = new Contact("To be", "Deleted", "", "");
         var contactId = contactDao.addContact(contact);
 
         contactDao.deleteContact(contactId);
 
-        var deletedContact = contactDao.getContact(contactId);
-        assertThat(deletedContact).isNull();
+        assertThatThrownBy(() -> contactDao.getContact(contactId))
+                .isInstanceOf(ContactNotFoundException.class)
+                .hasMessage("Contact not found with ID: " + contactId);
     }
 
     @Test

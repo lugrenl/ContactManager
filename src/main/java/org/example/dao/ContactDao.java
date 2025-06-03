@@ -10,8 +10,6 @@ public interface ContactDao {
     Contact getContact(long contactId);
     Contact updateContact(long contactId, Contact contact);
     List<Contact> getAllContacts();
-    void updatePhoneNumber(long contactId, String phoneNumber);
-    void updateEmail(long contactId, String email);
     void deleteContact(long contactId);
     void saveAll(Collection<Contact> contacts);
 }

@@ -66,32 +66,6 @@ public class ContactRepositoryTests {
     }
 
     @Test
-    void updatePhoneNumber() {
-        var contact = new Contact("Jekyll", "Hide", "jhide@gmail.com", "");
-        var contactId = contactRepository.save(contact).getId();
-
-        var newPhone = "777-77-77";
-        contactRepository.updatePhone(contactId, newPhone);
-
-        var updatedContact = contactRepository.findById(contactId)
-                .orElseThrow(IllegalArgumentException::new);
-        assertThat(updatedContact.getPhoneNumber()).isEqualTo(newPhone);
-    }
-
-    @Test
-    void updateEmail() {
-        var contact = new Contact("Captain", "America", "", "");
-        var contactId = contactRepository.save(contact).getId();
-
-        var newEmail = "cap@gmail.com";
-        contactRepository.updateEmail(contactId, newEmail);
-
-        var updatedContact = contactRepository.findById(contactId)
-                .orElseThrow(IllegalArgumentException::new);
-        assertThat(updatedContact.getEmail()).isEqualTo(newEmail);
-    }
-
-    @Test
     void deleteContact() {
         var contact = new Contact("To be", "Deleted", "", "");
         var contactId = contactRepository.save(contact).getId();
