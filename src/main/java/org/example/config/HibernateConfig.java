@@ -1,6 +1,7 @@
 package org.example.config;
 
 import org.example.model.Contact;
+import org.example.model.User;
 import org.hibernate.SessionFactory;
 
 import org.springframework.context.annotation.Bean;
@@ -15,6 +16,7 @@ public class HibernateConfig {
     public SessionFactory sessionFactory() {
         var configuration = new org.hibernate.cfg.Configuration()
                 .addAnnotatedClass(Contact.class)
+                .addAnnotatedClass(User.class)
                 .configure();
         return configuration.buildSessionFactory();
     }

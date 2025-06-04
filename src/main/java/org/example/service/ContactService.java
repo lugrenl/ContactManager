@@ -1,39 +1,49 @@
 package org.example.service;
 
-import lombok.extern.slf4j.Slf4j;
+import org.example.dto.ContactDto;
+import org.example.dao.ContactDao;
+
 import org.example.model.Contact;
-import org.example.repository.ContactRepository;
+import org.example.util.ContactReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
-@Slf4j
 @Service
 public class ContactService {
-
+    private final ContactDao contactDao;
     private final ContactReader contactReader;
-    private final ContactRepository contactRepository;
 
     @Autowired
-    public ContactService(ContactRepository contactRepository, ContactReader contactReader) {
-        this.contactRepository = contactRepository;
+    public ContactService(ContactDao contactDao, ContactReader contactReader) {
+        this.contactDao = contactDao;
         this.contactReader = contactReader;
     }
 
-    public void saveContacts(Path filePath) {
-        log.info("Сохраняем список контактов. Путь к файлу = {}", filePath);
-        var contacts = contactReader.readFromFile(filePath);
-        log.info("Найдено пользователей = {}", contacts.size());
-        contactRepository.saveAll(contacts);
-        log.info("Все контакты успешно сохранены");
+    public long addContact(Contact contact) {
+        return contactDao.addContact(contact);
     }
 
-    public List<Contact> getContacts() {
-        log.info("Получаем список контактов");
-        List<Contact> contacts = contactRepository.findAll();
-        log.info("Найдено контактов = {}", contacts.size());
-        return contacts;
+    public ContactDto getContact(long contactId) {
+        return new ContactDto(contactDao.getContact(contactId));
+    }
+
+    public List<ContactDto> getAllContacts() {
+        return contactDao.getAllContacts().stream().map(ContactDto::new).toList();
+    }
+
+    public ContactDto updateContact(long contactId, Contact contact) {
+        return new ContactDto(contactDao.updateContact(contactId, contact));
+    }
+
+    public void deleteContact(long contactId) {
+        contactDao.deleteContact(contactId);
+    }
+
+    public void saveAll(String filePath) {
+        var contacts = contactReader.readFromFile(Paths.get(filePath));
+        contactDao.saveAll(contacts);
     }
 }

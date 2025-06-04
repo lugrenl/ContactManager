@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.config.ContactsManagerConfig;
+import org.example.dto.ContactDto;
 import org.example.model.Contact;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +14,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Unit tests for {@link ContactService}.
@@ -39,11 +41,11 @@ public class ContactServiceTests {
 
     @Test
     void saveContacts() throws IOException {
-        var filePath = new ClassPathResource("contacts.csv").getFile().toPath();
-        contactService.saveContacts(filePath);
+        String filePath = new ClassPathResource("contacts.csv").getFile().getPath();
+        contactService.saveAll(filePath);
 
-        var contacts = contactService.getContacts();
+        List<ContactDto> contacts = contactService.getAllContacts();
 
-        assertThat(contacts).contains(IVAN, MARIA);
+        assertThat(contacts).containsExactly(new ContactDto(IVAN), new ContactDto(MARIA));
     }
 }

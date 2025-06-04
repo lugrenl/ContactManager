@@ -4,18 +4,21 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "contact")
+@Table(name = "contacts")
 public class Contact {
 
     @Id
     @NotNull(message = "Id should not be null")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "contact_id")
     private long id;
 
     @NotBlank(message = "Name is required")
@@ -38,7 +41,18 @@ public class Contact {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @ManyToMany(mappedBy = "contacts", fetch = FetchType.EAGER)
+    private Set<User> users = new HashSet<>();
+
     public Contact(String name, String surname, String email, String phoneNumber) {
+        this.name = name;
+        this.surname = surname;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public Contact(long id, String name, String surname, String email, String phoneNumber) {
+        this.id = id;
         this.name = name;
         this.surname = surname;
         this.email = email;

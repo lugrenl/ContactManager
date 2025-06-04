@@ -77,7 +77,7 @@ public record HibernateContactDaoTests(@Autowired ContactDao contactDao) {
 
     @Test
     void deleteContact() {
-        var contact = new Contact("To be", "Deleted", "", "");
+        var contact = new Contact("To be", "Deleted", "mail@gmail.com", "1234567890");
         var contactId = contactDao.addContact(contact);
 
         contactDao.deleteContact(contactId);
@@ -89,12 +89,12 @@ public record HibernateContactDaoTests(@Autowired ContactDao contactDao) {
 
     @Test
     void updateContact() {
-        var contact = new Contact("Name", "Surname", "email", "phonenumber");
+        var contact = new Contact("Name", "Surname", "mail@gmail.com", "phonenumber");
         var contactId = contactDao.addContact(contact);
 
-        var contactToUpdate = new Contact(contactId, "NewName", "NewSurname", "Newemail", "newphonenumber");
+        var contactToUpdate = new Contact(contactId, "NewName", "NewSurname", "newmail@gmail.com", "newphonenumber");
 
         var updatedContact = contactDao.updateContact(contactId, contactToUpdate);
-        assertThat(updatedContact).isEqualTo(new Contact(contactId, "NewName", "NewSurname", "Newemail", "newphonenumber"));
+        assertThat(updatedContact).isEqualTo(new Contact(contactId, "NewName", "NewSurname", "newmail@gmail.com", "newphonenumber"));
     }
 }
