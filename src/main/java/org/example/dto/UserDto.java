@@ -28,9 +28,14 @@ public class UserDto {
     @JsonProperty("email")
     private String email;
 
+    @NotBlank(message = "Role is required")
+    @NotEmpty(message = "Role should not be empty")
+    private String role;
+
     public UserDto(User user) {
         this.name = user.getName();
         this.password = user.getPassword();
         this.email = user.getEmail();
+        this.role = user.getRole();
     }
 }

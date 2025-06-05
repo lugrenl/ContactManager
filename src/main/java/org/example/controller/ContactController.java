@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/contacts")
+@RequestMapping("api/contacts")
 public class ContactController {
     private final ContactService contactService;
     private final ModelMapper modelMapper;
@@ -24,7 +24,7 @@ public class ContactController {
 
     @PostMapping
     public long addContact(@RequestBody @Valid ContactDto contactDto) {
-        Contact contact = convertToContact(contactDto);
+        Contact contact = modelMapper.map(contactDto, Contact.class);
         return contactService.addContact(contact);
     }
 
@@ -41,7 +41,7 @@ public class ContactController {
     @PutMapping("/{contactId}")
     public ContactDto updateContact(@PathVariable("contactId") long contactId,
                                     @RequestBody @Valid ContactDto contactDto) {
-        Contact contact = convertToContact(contactDto);
+        Contact contact = modelMapper.map(contactDto, Contact.class);
         return contactService.updateContact(contactId, contact);
     }
 
@@ -53,9 +53,5 @@ public class ContactController {
     @PostMapping("/import")
     public void saveAll (@RequestParam("filePath") String filePath) {
         contactService.saveAll(filePath);
-    }
-
-    private Contact convertToContact(ContactDto contactDto) {
-        return this.modelMapper.map(contactDto, Contact.class);
     }
 }

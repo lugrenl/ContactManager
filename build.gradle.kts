@@ -14,6 +14,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web:3.5.0")
     // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jdbc
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc:3.4.1")
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
+    // implementation("org.springframework.boot:spring-boot-starter-security:3.5.0")
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     implementation("org.postgresql:postgresql:42.7.5")
     // https://mvnrepository.com/artifact/org.projectlombok/lombok
