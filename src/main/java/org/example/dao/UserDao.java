@@ -5,12 +5,14 @@ import org.example.exceptions.UserNotFoundException;
 import org.example.model.User;
 import org.hibernate.HibernateException;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -44,12 +46,11 @@ public class UserDao {
     }
 
     @Transactional
-    public long addUser(User user) {
+    public void addUser(User user) {
         try (var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
-            long userId = (Long) session.save(user);
+            session.save(user);
             transaction.commit();
-            return userId;
         }
     }
 
@@ -82,6 +83,15 @@ public class UserDao {
                 throw new UserNotFoundException("User not found with ID: " + userId);
             }
             transaction.commit();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByUsername(String username) {
+        try (var session = sessionFactory.openSession()) {
+            Query<User> query = session.createQuery("FROM User WHERE name = :username", User.class);
+            query.setParameter("username", username);
+            return query.uniqueResultOptional();
         }
     }
 }
