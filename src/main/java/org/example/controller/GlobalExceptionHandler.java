@@ -1,8 +1,8 @@
 package org.example.controller;
 
 import org.example.exceptions.ContactNotFoundException;
-import org.example.util.ContactErrorResponse;
-import org.example.util.ValidationErrorResponse;
+import org.example.dto.ContactErrorResponse;
+import org.example.dto.ValidationErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
