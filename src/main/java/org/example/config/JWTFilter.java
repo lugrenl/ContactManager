@@ -63,7 +63,7 @@ public class JWTFilter extends OncePerRequestFilter {
                     userDetails.getAuthorities()
             );
 
-            // 6. Устанавливаем аутентификацию в контекст
+            // Устанавливаем аутентификацию в контекст
             SecurityContextHolder.getContext().setAuthentication(authToken);
             log.debug("Authenticated user: {}", username);
 
