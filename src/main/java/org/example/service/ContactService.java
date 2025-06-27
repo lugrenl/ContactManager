@@ -34,10 +34,13 @@ public class ContactService {
         return contactDao.addContact(contact);
     }
 
-    public void addContactToCurrentUser(Contact contact) {
+    public ContactDto addContactToCurrentUser(Contact contact) {
         User user = getCurrentUser();
         user.getContacts().add(contact);
         contact.getUsers().add(user);
+        long contactId = contactDao.addContact(contact);
+        contact.setId(contactId);
+        return new ContactDto(contact);
     }
 
     public ContactDto getContact(long contactId) {

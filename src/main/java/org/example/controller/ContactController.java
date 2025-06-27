@@ -6,6 +6,7 @@ import org.example.service.ContactService;
 import org.example.model.Contact;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,10 +28,10 @@ public class ContactController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public long addContact(@RequestBody @Valid ContactDto contactDto) {
+    public ResponseEntity<ContactDto> addContact(@RequestBody @Valid ContactDto contactDto) {
         Contact contact = modelMapper.map(contactDto, Contact.class);
-        contactService.addContactToCurrentUser(contact);
-        return contactService.addContact(contact);
+        ContactDto savedContact = contactService.addContactToCurrentUser(contact);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedContact);
     }
 
     @GetMapping("/{contactId}")
