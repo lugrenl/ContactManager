@@ -6,10 +6,12 @@ import org.example.service.ContactService;
 import org.example.model.Contact;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("api/contacts")
@@ -24,40 +26,49 @@ public class ContactController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN') and hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public long addContact(@RequestBody @Valid ContactDto contactDto) {
         Contact contact = modelMapper.map(contactDto, Contact.class);
+        contactService.addContactToCurrentUser(contact);
         return contactService.addContact(contact);
     }
 
     @GetMapping("/{contactId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') and hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ContactDto getContact(@PathVariable("contactId") long contactId) {
         return contactService.getContact(contactId);
     }
 
-    @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN') and hasRole('ROLE_USER')")
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public List<ContactDto> getAllContacts() {
         return contactService.getAllContacts();
     }
 
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
+    public Set<Contact> getAllContactsForCurrentUser() {
+        return contactService.getContactsForCurrentUser();
+    }
+
     @PutMapping("/{contactId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') and hasRole('ROLE_USER')")
-    public ContactDto updateContact(@PathVariable("contactId") long contactId,
-                                    @RequestBody @Valid ContactDto contactDto) {
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
+    public ResponseEntity<ContactDto> updateContact(@PathVariable("contactId") long contactId,
+                                                    @RequestBody @Valid ContactDto contactDto) {
         Contact contact = modelMapper.map(contactDto, Contact.class);
-        return contactService.updateContact(contactId, contact);
+        ContactDto updatedContact = contactService.updateContactForCurrentUser(contactId, contact);
+        return ResponseEntity.ok(updatedContact);
     }
 
     @DeleteMapping("/{contactId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') and hasRole('ROLE_USER')")
-    public void deleteContact(@PathVariable("contactId") long contactId) {
-        contactService.deleteContact(contactId);
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
+    public ResponseEntity<?> deleteContact(@PathVariable("contactId") long contactId) {
+        contactService.deleteContactFromCurrentUser(contactId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/import")
-    @PreAuthorize("hasRole('ROLE_ADMIN') and hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public void saveAll (@RequestParam("filePath") String filePath) {
         contactService.saveAll(filePath);
     }

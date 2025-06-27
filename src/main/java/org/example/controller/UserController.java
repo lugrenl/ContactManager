@@ -42,7 +42,7 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public void deleteUser(@PathVariable("userId") long contactId) {
-        userService.deleteContact(contactId);
+    public void deleteUser(@PathVariable("userId") long userId) {
+        userService.deleteContact(userId);
     }
 }

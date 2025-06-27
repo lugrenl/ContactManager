@@ -46,11 +46,12 @@ public class UserDao {
     }
 
     @Transactional
-    public void addUser(User user) {
+    public User addUser(User user) {
         try (var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
             session.save(user);
             transaction.commit();
+            return user;
         }
     }
 
