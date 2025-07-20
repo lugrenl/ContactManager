@@ -1,4 +1,4 @@
-package org.example.model;
+package org.example.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -6,7 +6,6 @@ import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
-
 
 @Data
 @NoArgsConstructor

@@ -2,7 +2,7 @@ package org.example.service;
 
 import org.example.config.ContactsManagerConfig;
 import org.example.dto.ContactDto;
-import org.example.model.Contact;
+import org.example.entity.Contact;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

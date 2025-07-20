@@ -1,10 +1,10 @@
 package org.example.service;
 
+import lombok.RequiredArgsConstructor;
 import org.example.dao.UserDao;
 import org.example.dto.UserDto;
 import org.example.exceptions.UserNotFoundException;
-import org.example.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.example.entity.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,15 +13,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder) {
-        this.userDao = userDao;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     public List<UserDto> getAllUsers() {
         return userDao.getAllUsers().stream().map(UserDto::new).toList();

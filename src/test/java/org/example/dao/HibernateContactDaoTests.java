@@ -2,7 +2,7 @@ package org.example.dao;
 
 import org.example.config.ContactsManagerConfig;
 import org.example.exceptions.ContactNotFoundException;
-import org.example.model.Contact;
+import org.example.entity.Contact;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

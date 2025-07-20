@@ -1,7 +1,7 @@
 package org.example.config;
 
-import org.example.model.Contact;
-import org.example.model.User;
+import org.example.entity.Contact;
+import org.example.entity.User;
 import org.hibernate.SessionFactory;
 
 import org.springframework.context.annotation.Bean;

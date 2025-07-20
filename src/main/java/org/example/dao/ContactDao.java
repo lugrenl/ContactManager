@@ -1,6 +1,6 @@
 package org.example.dao;
 
-import org.example.model.Contact;
+import org.example.entity.Contact;
 
 import java.util.Collection;
 import java.util.List;

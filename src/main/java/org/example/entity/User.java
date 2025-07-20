@@ -1,4 +1,4 @@
-package org.example.model;
+package org.example.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;

@@ -1,6 +1,5 @@
 package org.example.config;
 
-import org.example.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,12 +20,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final UserDetailsServiceImpl userDetailsService;
     private final JWTFilter jwtFilter;
 
     @Autowired
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService, JWTFilter jwtFilter) {
-        this.userDetailsService = userDetailsService;
+    public SecurityConfig(JWTFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
 

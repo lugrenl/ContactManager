@@ -1,6 +1,6 @@
 package org.example.util;
 
-import org.example.model.Contact;
+import org.example.entity.Contact;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

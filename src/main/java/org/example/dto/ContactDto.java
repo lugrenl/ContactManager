@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.model.Contact;
+import org.example.entity.Contact;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

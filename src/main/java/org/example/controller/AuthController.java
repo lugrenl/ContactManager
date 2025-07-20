@@ -1,14 +1,14 @@
 package org.example.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.example.dto.AuthenticationDto;
 import org.example.dto.UserDto;
-import org.example.model.User;
+import org.example.entity.User;
 import org.example.service.JWTUtil;
 import org.example.service.RegistrationService;
 import org.example.util.UserValidator;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
 
@@ -30,21 +31,9 @@ public class AuthController {
     private final ModelMapper modelMapper;
     private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    public AuthController(RegistrationService registrationService, UserValidator userValidator,
-                          JWTUtil jwtUtil, ModelMapper modelMapper, AuthenticationManager authenticationManager) {
-        this.registrationService = registrationService;
-        this.userValidator = userValidator;
-        this.jwtUtil = jwtUtil;
-        this.modelMapper = modelMapper;
-        this.authenticationManager = authenticationManager;
-    }
-
     @PostMapping("/register")
-    public Map<String, String> performRegistration(@RequestBody @Valid UserDto userDTO,
-                                                   BindingResult bindingResult) {
+    public Map<String, String> performRegistration(@RequestBody @Valid UserDto userDTO, BindingResult bindingResult) {
         User user = convertToUser(userDTO);
-
         userValidator.validate(user, bindingResult);
 
         if (bindingResult.hasErrors()) {

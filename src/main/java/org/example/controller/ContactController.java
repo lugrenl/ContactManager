@@ -1,11 +1,11 @@
 package org.example.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.example.dto.ContactDto;
 import org.example.service.ContactService;
-import org.example.model.Contact;
+import org.example.entity.Contact;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,16 +15,11 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("api/contacts")
 public class ContactController {
     private final ContactService contactService;
     private final ModelMapper modelMapper;
-
-    @Autowired
-    public ContactController(ContactService contactService, ModelMapper modelMapper) {
-        this.contactService = contactService;
-        this.modelMapper = modelMapper;
-    }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
