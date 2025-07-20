@@ -3,7 +3,7 @@ package org.example.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.AuthenticationDto;
-import org.example.dto.UserDto;
+import org.example.dto.RegistrationDto;
 import org.example.entity.User;
 import org.example.service.JWTUtil;
 import org.example.service.RegistrationService;
@@ -32,8 +32,9 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/register")
-    public Map<String, String> performRegistration(@RequestBody @Valid UserDto userDTO, BindingResult bindingResult) {
-        User user = convertToUser(userDTO);
+    public Map<String, String> performRegistration(@RequestBody @Valid RegistrationDto registrationDto,
+                                                   BindingResult bindingResult) {
+        User user = convertToUser(registrationDto);
         userValidator.validate(user, bindingResult);
 
         if (bindingResult.hasErrors()) {
@@ -62,8 +63,8 @@ public class AuthController {
         return Map.of("jwt-token", token);
     }
 
-    public User convertToUser(UserDto userDTO) {
-        return this.modelMapper.map(userDTO, User.class);
+    public User convertToUser(RegistrationDto registrationDto) {
+        return this.modelMapper.map(registrationDto, User.class);
     }
 }
 
