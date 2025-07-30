@@ -32,6 +32,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation:3.5.0")
     // https://mvnrepository.com/artifact/com.auth0/java-jwt
     implementation("com.auth0:java-jwt:4.5.0")
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.0")
 
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     testImplementation("ch.qos.logback:logback-classic:1.5.16")
