@@ -21,7 +21,6 @@ public class HibernateContactDao implements ContactDao {
     private final SessionFactory sessionFactory;
 
     @Override
-    @Transactional
     public long addContact(Contact contact) {
         try(var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
@@ -32,7 +31,6 @@ public class HibernateContactDao implements ContactDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Contact getContact(long contactId) {
         try (Session session = sessionFactory.openSession()) {
             Contact contact = session.get(Contact.class, contactId);
@@ -47,7 +45,6 @@ public class HibernateContactDao implements ContactDao {
     }
 
     @Override
-    @Transactional
     public Contact updateContact(long contactId, Contact contact) {
         try(var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
@@ -66,7 +63,6 @@ public class HibernateContactDao implements ContactDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Contact> getAllContacts() {
         try(var session = sessionFactory.openSession()) {
             return session.createQuery("from Contact", Contact.class).getResultList();
@@ -74,7 +70,6 @@ public class HibernateContactDao implements ContactDao {
     }
 
     @Override
-    @Transactional
     public void deleteContact(long contactId) {
         try(var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
@@ -89,7 +84,6 @@ public class HibernateContactDao implements ContactDao {
     }
 
     @Override
-    @Transactional
     public void saveAll(Collection<Contact> contacts) {
         try(var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();

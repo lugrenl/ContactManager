@@ -43,7 +43,7 @@ public class ContactController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public Set<Contact> getAllContactsForCurrentUser() {
+    public Set<ContactDto> getAllContactsForCurrentUser() {
         return contactService.getContactsForCurrentUser();
     }
 

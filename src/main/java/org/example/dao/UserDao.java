@@ -20,14 +20,12 @@ import java.util.Optional;
 public class UserDao {
     private final SessionFactory sessionFactory;
 
-    @Transactional(readOnly = true)
     public List<User> getAllUsers() {
         try (var session = sessionFactory.openSession()) {
             return session.createQuery("from User", User.class).getResultList();
         }
     }
 
-    @Transactional(readOnly = true)
     public User getUser(Long userId) {
         try (var session = sessionFactory.openSession()) {
             User user = session.get(User.class, userId);
@@ -41,7 +39,6 @@ public class UserDao {
         }
     }
 
-    @Transactional
     public User addUser(User user) {
         try (var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
@@ -51,7 +48,6 @@ public class UserDao {
         }
     }
 
-    @Transactional
     public User updateUser(long userId, User user) {
         try (var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
@@ -61,6 +57,16 @@ public class UserDao {
                 userToUpdate.setPassword(user.getPassword());
                 userToUpdate.setEmail(user.getEmail());
                 userToUpdate.setRole(user.getRole());
+                
+                // Update the contacts collection
+                if (user.getContacts() != null) {
+                    // Clear existing contacts to avoid duplicates
+                    userToUpdate.getContacts().clear();
+                    // Add all contacts from the updated user
+                    userToUpdate.getContacts().addAll(user.getContacts());
+                }
+                
+                session.merge(userToUpdate);
             } else {
                 throw new UserNotFoundException("User not found with ID: " + userId);
             }
@@ -69,7 +75,6 @@ public class UserDao {
         }
     }
 
-    @Transactional
     public void deleteUser(long userId) {
         try (var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
@@ -83,7 +88,6 @@ public class UserDao {
         }
     }
 
-    @Transactional(readOnly = true)
     public Optional<User> findByUsername(String username) {
         try (var session = sessionFactory.openSession()) {
             Query<User> query = session.createQuery("FROM User WHERE name = :username", User.class);

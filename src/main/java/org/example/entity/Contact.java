@@ -3,13 +3,17 @@ package org.example.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import java.util.Objects;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = "users")
+@EqualsAndHashCode(exclude = "users")
 @Entity
 @Table(name = "contacts")
 public class Contact {
@@ -42,6 +46,17 @@ public class Contact {
 
     @ManyToMany(mappedBy = "contacts", fetch = FetchType.EAGER)
     private Set<User> users = new HashSet<>();
+    
+    // Helper method to manage bidirectional relationship
+    public void addUser(User user) {
+        users.add(user);
+        user.getContacts().add(this);
+    }
+    
+    public void removeUser(User user) {
+        users.remove(user);
+        user.getContacts().remove(this);
+    }
 
     public Contact(String name, String surname, String email, String phoneNumber) {
         this.name = name;

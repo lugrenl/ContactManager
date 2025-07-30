@@ -2,9 +2,7 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,6 +10,8 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = "contacts")
+@EqualsAndHashCode(exclude = "contacts")
 @Entity
 @Table(name = "users")
 public class User {
@@ -30,7 +30,7 @@ public class User {
 
     @NotBlank(message = "Password is required")
     @NotEmpty(message = "Password should not be empty")
-    @Size(min = 8, max = 20, message = "Password should be between 8 and 20 characters")
+    //@Size(min = 8, max = 20, message = "Password should be between 8 and 20 characters")
     @Column(name = "password")
     private String password;
 
@@ -45,11 +45,22 @@ public class User {
     @Column(name = "role")
     private String role;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "user_contacts",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "contact_id")
     )
     private Set<Contact> contacts = new HashSet<>();
+    
+    // Helper method to manage bidirectional relationship
+    public void addContact(Contact contact) {
+        contacts.add(contact);
+        contact.getUsers().add(this);
+    }
+    
+    public void removeContact(Contact contact) {
+        contacts.remove(contact);
+        contact.getUsers().remove(this);
+    }
 }
