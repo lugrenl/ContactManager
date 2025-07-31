@@ -38,4 +38,7 @@ public class UserDto {
         this.email = user.getEmail();
         this.role = user.getRole();
     }
+
+    // TODO validation for password
+    // TODO use constructor instead modelmapper?
 }

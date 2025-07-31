@@ -1,14 +1,12 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.dao.UserDao;
 import org.example.dto.ContactDto;
 import org.example.dao.ContactDao;
 
 import org.example.entity.Contact;
 import org.example.entity.User;
 import org.example.util.ContactReader;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,13 +24,6 @@ public class ContactService {
     private final ContactDao contactDao;
     private final ContactReader contactReader;
     private final UserService userService;
-    private final ModelMapper modelMapper;
-    private final UserDao userDao;
-
-    @Transactional
-    public long addContact(Contact contact) {
-        return contactDao.addContact(contact);
-    }
 
     @Transactional
     public ContactDto addContactToCurrentUser(Contact contact) {
@@ -71,16 +62,6 @@ public class ContactService {
     public Set<ContactDto> getContactsForCurrentUser() {
         User user = getCurrentUser();
         return user.getContacts().stream().map(ContactDto::new).collect(Collectors.toSet());
-    }
-
-    @Transactional
-    public ContactDto updateContact(long contactId, Contact contact) {
-        return new ContactDto(contactDao.updateContact(contactId, contact));
-    }
-
-    @Transactional
-    public void deleteContact(long contactId) {
-        contactDao.deleteContact(contactId);
     }
 
     @Transactional

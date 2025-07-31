@@ -9,7 +9,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,17 +51,18 @@ public class UserDao {
         try (var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
             User userToUpdate = session.get(User.class, userId);
+
             if (userToUpdate != null) {
                 userToUpdate.setName(user.getName());
                 userToUpdate.setPassword(user.getPassword());
                 userToUpdate.setEmail(user.getEmail());
                 userToUpdate.setRole(user.getRole());
                 
-                // Update the contacts collection
+                // Обновляем
                 if (user.getContacts() != null) {
-                    // Clear existing contacts to avoid duplicates
+                    // Очищаем список контактов, чтобы избежать дублирования
                     userToUpdate.getContacts().clear();
-                    // Add all contacts from the updated user
+                    // Добавляем новые контакты в список контактов пользователя
                     userToUpdate.getContacts().addAll(user.getContacts());
                 }
                 

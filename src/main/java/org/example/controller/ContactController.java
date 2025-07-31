@@ -63,6 +63,7 @@ public class ContactController {
         return ResponseEntity.ok().build();
     }
 
+    //TODO move to separate controller
     @PostMapping("/import")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public void saveAll (@RequestParam("filePath") String filePath) {

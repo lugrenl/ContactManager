@@ -42,4 +42,6 @@ public class UserController {
     public void deleteUser(@PathVariable("userId") long userId) {
         userService.deleteContact(userId);
     }
+
+    //TODO test it
 }

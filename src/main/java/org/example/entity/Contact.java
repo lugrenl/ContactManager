@@ -3,7 +3,6 @@ package org.example.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
-import java.util.Objects;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -47,7 +46,7 @@ public class Contact {
     @ManyToMany(mappedBy = "contacts", fetch = FetchType.EAGER)
     private Set<User> users = new HashSet<>();
     
-    // Helper method to manage bidirectional relationship
+    // Вспомогательный метод для двунаправленного связывания
     public void addUser(User user) {
         users.add(user);
         user.getContacts().add(this);

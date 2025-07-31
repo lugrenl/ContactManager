@@ -66,5 +66,8 @@ public class AuthController {
     public User convertToUser(RegistrationDto registrationDto) {
         return this.modelMapper.map(registrationDto, User.class);
     }
+
+    // TODO : implement registration for admin
+    // TODO : implement logout
 }
 

@@ -53,7 +53,7 @@ public class User {
     )
     private Set<Contact> contacts = new HashSet<>();
     
-    // Helper method to manage bidirectional relationship
+    // Вспомогательный метод для двунаправленного связывания
     public void addContact(Contact contact) {
         contacts.add(contact);
         contact.getUsers().add(this);
@@ -63,4 +63,6 @@ public class User {
         contacts.remove(contact);
         contact.getUsers().remove(this);
     }
+
+    //TODO валидация
 }

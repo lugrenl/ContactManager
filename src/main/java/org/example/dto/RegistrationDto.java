@@ -29,4 +29,6 @@ public class RegistrationDto {
     @Email(message = "User email should be valid")
     @JsonProperty("email")
     private String email;
+
+    // TODO validation password
 }

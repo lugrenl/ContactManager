@@ -9,7 +9,6 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
