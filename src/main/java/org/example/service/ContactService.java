@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,18 +28,30 @@ public class ContactService {
 
     @Transactional
     public ContactDto addContactToCurrentUser(Contact contact) {
-        // Get the current user with an open session
+        // 1. Получаем текущего пользователя
         User user = getCurrentUser();
-        
-        // Add the contact to the user (this updates both sides of the relationship)
+
+        // 2. Проверяем, существует ли уже такой контакт
+        Optional<Contact> existingContact = contactDao.findExistingContact(
+                contact.getName(),
+                contact.getSurname(),
+                contact.getEmail(),
+                contact.getPhoneNumber()
+        );
+
+        // 3. Если контакт существует, используем существующий
+        if (existingContact.isPresent()) {
+            contact = existingContact.get();
+        } else {
+            // 4. Если контакта нет, создаем новый
+            long contactId = contactDao.addContact(contact);
+            contact.setId(contactId);
+        }
+
+        // 5. Добавляем связь пользователя с контактом
         user.addContact(contact);
 
-        // Save the contact (the cascade should handle the relationship)
-        long contactId = contactDao.addContact(contact);
-        contact.setId(contactId);
-
-        // Explicitly save the user to ensure the relationship is persisted
-        // This is needed because User is the owner of the relationship
+        // 6. Сохраняем изменения
         userService.updateUser(user.getId(), user);
 
         return new ContactDto(contact);

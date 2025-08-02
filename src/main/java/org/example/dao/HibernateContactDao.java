@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -88,6 +89,23 @@ public class HibernateContactDao implements ContactDao {
             var transaction = session.beginTransaction();
             contacts.forEach(session::save);
             transaction.commit();
+        }
+    }
+
+    @Override
+    public Optional<Contact> findExistingContact(String name, String surname, String email, String phoneNumber) {
+        try (var session = sessionFactory.openSession()) {
+            String hql = "FROM Contact c WHERE c.name = :name " +
+                    "AND c.surname = :surname " +
+                    "AND c.email = :email " +
+                    "AND c.phoneNumber = :phoneNumber";
+
+            return session.createQuery(hql, Contact.class)
+                    .setParameter("name", name)
+                    .setParameter("surname", surname)
+                    .setParameter("email", email)
+                    .setParameter("phoneNumber", phoneNumber)
+                    .uniqueResultOptional();
         }
     }
 }

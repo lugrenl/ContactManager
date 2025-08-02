@@ -4,6 +4,7 @@ import org.example.entity.Contact;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ContactDao {
     long addContact(Contact contact);
@@ -12,4 +13,5 @@ public interface ContactDao {
     List<Contact> getAllContacts();
     void deleteContact(long contactId);
     void saveAll(Collection<Contact> contacts);
+    Optional<Contact> findExistingContact(String name, String surname, String email, String phoneNumber);
 }
