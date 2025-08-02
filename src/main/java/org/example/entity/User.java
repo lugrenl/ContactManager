@@ -30,7 +30,6 @@ public class User {
 
     @NotBlank(message = "Password is required")
     @NotEmpty(message = "Password should not be empty")
-    //@Size(min = 8, max = 20, message = "Password should be between 8 and 20 characters")
     @Column(name = "password")
     private String password;
 
@@ -63,6 +62,4 @@ public class User {
         contacts.remove(contact);
         contact.getUsers().remove(this);
     }
-
-    //TODO валидация
 }

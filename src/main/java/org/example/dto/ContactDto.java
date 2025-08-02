@@ -41,6 +41,4 @@ public class ContactDto {
         this.email = contact.getEmail();
         this.phoneNumber = contact.getPhoneNumber();
     }
-
-    // TODO use it instead model mapper ?
 }
