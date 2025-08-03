@@ -9,6 +9,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
@@ -22,10 +24,19 @@ public class ContactController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public ResponseEntity<ContactDto> addContact(@RequestBody @Valid ContactDto contactDto) {
-        Contact contact = modelMapper.map(contactDto, Contact.class);
-        ContactDto savedContact = contactService.addContactToCurrentUser(contact);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedContact);
+    public ResponseEntity<ContactDto> addContact(@RequestBody @Valid ContactDto contactDto,
+                                                 BindingResult bindingResult) throws BindException {
+        if (bindingResult.hasErrors()) {
+            if (bindingResult instanceof BindException exception) {
+                throw exception;
+            } else {
+                throw new BindException(bindingResult);
+            }
+        } else {
+            Contact contact = modelMapper.map(contactDto, Contact.class);
+            ContactDto savedContact = contactService.addContactToCurrentUser(contact);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedContact);
+        }
     }
 
     @GetMapping("/{contactId}")
@@ -44,10 +55,19 @@ public class ContactController {
     @PutMapping("/{contactId}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<ContactDto> updateContact(@PathVariable("contactId") long contactId,
-                                                    @RequestBody @Valid ContactDto contactDto) {
-        Contact contact = modelMapper.map(contactDto, Contact.class);
-        ContactDto updatedContact = contactService.updateContactForCurrentUser(contactId, contact);
-        return ResponseEntity.ok(updatedContact);
+                                                    @RequestBody @Valid ContactDto contactDto,
+                                                    BindingResult bindingResult) throws BindException {
+        if (bindingResult.hasErrors()) {
+            if (bindingResult instanceof BindException exception) {
+                throw exception;
+            } else {
+                throw new BindException(bindingResult);
+            }
+        } else {
+            Contact contact = modelMapper.map(contactDto, Contact.class);
+            ContactDto updatedContact = contactService.updateContactForCurrentUser(contactId, contact);
+            return ResponseEntity.ok(updatedContact);
+        }
     }
 
     @DeleteMapping("/{contactId}")
