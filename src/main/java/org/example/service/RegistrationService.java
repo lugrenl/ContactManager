@@ -16,7 +16,8 @@ public class RegistrationService {
     @Transactional
     public void register(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole("ROLE_USER");
+        if (user.getRole() == null)
+            user.setRole("ROLE_USER");
         userDao.addUser(user);
     }
 }
