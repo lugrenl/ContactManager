@@ -12,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,22 +34,26 @@ public class AuthController {
 
     @PostMapping("/register")
     public Map<String, String> performRegistration(@RequestBody @Valid RegistrationDto registrationDto,
-                                                   BindingResult bindingResult) {
+                                                   BindingResult bindingResult) throws BindException {
         User user = convertToUser(registrationDto);
         userValidator.validate(user, bindingResult);
 
         if (bindingResult.hasErrors()) {
-            return Map.of("message", "Ошибка!");
+            if (bindingResult instanceof BindException exception) {
+                throw exception;
+            } else {
+                throw new BindException(bindingResult);
+            }
+        } else {
+            registrationService.register(user);
+            String token = jwtUtil.generateToken(user.getName());
+            return Map.of("jwt-token", token);
         }
-
-        registrationService.register(user);
-
-        String token = jwtUtil.generateToken(user.getName());
-        return Map.of("jwt-token", token);
     }
 
     @PostMapping("/login")
     public Map<String, String> performLogin(@RequestBody AuthenticationDto authenticationDTO) {
+
         UsernamePasswordAuthenticationToken authInputToken =
                 new UsernamePasswordAuthenticationToken(authenticationDTO.getName(),
                         authenticationDTO.getPassword());
