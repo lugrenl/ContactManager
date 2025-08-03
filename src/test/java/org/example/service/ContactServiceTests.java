@@ -1,7 +1,7 @@
 package org.example.service;
 
 import org.example.config.ContactsManagerConfig;
-import org.example.dto.ContactDto;
+import org.example.dto.ResponseContactDto;
 import org.example.entity.Contact;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,8 +44,8 @@ public class ContactServiceTests {
         String filePath = new ClassPathResource("contacts.csv").getFile().getPath();
         contactService.saveAll(filePath);
 
-        List<ContactDto> contacts = contactService.getAllContacts();
+        List<ResponseContactDto> contacts = contactService.getAllContacts();
 
-        assertThat(contacts).containsExactly(new ContactDto(IVAN), new ContactDto(MARIA));
+        assertThat(contacts).containsExactly(new ResponseContactDto(IVAN), new ResponseContactDto(MARIA));
     }
 }

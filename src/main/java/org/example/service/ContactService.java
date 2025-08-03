@@ -1,9 +1,9 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.dto.ContactDto;
 import org.example.dao.ContactDao;
 
+import org.example.dto.ResponseContactDto;
 import org.example.entity.Contact;
 import org.example.entity.User;
 import org.example.util.ContactReader;
@@ -27,7 +27,7 @@ public class ContactService {
     private final UserService userService;
 
     @Transactional
-    public ContactDto addContactToCurrentUser(Contact contact) {
+    public ResponseContactDto addContactToCurrentUser(Contact contact) {
         // 1. Получаем текущего пользователя
         User user = getCurrentUser();
 
@@ -54,27 +54,27 @@ public class ContactService {
         // 6. Сохраняем изменения
         userService.updateUser(user.getId(), user);
 
-        return new ContactDto(contact);
+        return new ResponseContactDto(contact);
     }
 
     @Transactional(readOnly = true)
-    public ContactDto getContact(long contactId) {
+    public ResponseContactDto getContact(long contactId) {
         User user = getCurrentUser();
         if (!user.getContacts().contains(contactDao.getContact(contactId))) {
             throw new AccessDeniedException("Contact not belongs to user");
         }
-        return new ContactDto(contactDao.getContact(contactId));
+        return new ResponseContactDto(contactDao.getContact(contactId));
     }
 
     @Transactional
-    public List<ContactDto> getAllContacts() {
-        return contactDao.getAllContacts().stream().map(ContactDto::new).toList();
+    public List<ResponseContactDto> getAllContacts() {
+        return contactDao.getAllContacts().stream().map(ResponseContactDto::new).toList();
     }
 
     @Transactional
-    public Set<ContactDto> getContactsForCurrentUser() {
+    public Set<ResponseContactDto> getContactsForCurrentUser() {
         User user = getCurrentUser();
-        return user.getContacts().stream().map(ContactDto::new).collect(Collectors.toSet());
+        return user.getContacts().stream().map(ResponseContactDto::new).collect(Collectors.toSet());
     }
 
     @Transactional
@@ -108,7 +108,7 @@ public class ContactService {
     }
 
     @Transactional
-    public ContactDto updateContactForCurrentUser(Long contactId, Contact newData) {
+    public ResponseContactDto updateContactForCurrentUser(Long contactId, Contact newData) {
         // 1. Get current user
         User currentUser = getCurrentUser();
 
@@ -145,7 +145,7 @@ public class ContactService {
         }
 
         // 9. Return the DTO of the new contact
-        return new ContactDto(savedContact);
+        return new ResponseContactDto(savedContact);
     }
 
     private User getCurrentUser() {

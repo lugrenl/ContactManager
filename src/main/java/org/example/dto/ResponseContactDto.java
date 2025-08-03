@@ -1,9 +1,7 @@
 package org.example.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
+import jakarta.persistence.Id;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.entity.Contact;
@@ -13,7 +11,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data
 @NoArgsConstructor
-public class ContactDto {
+public class ResponseContactDto {
+
+    @Id
+    @NotNull(message = "Id should not be null")
+    private long id;
 
     @NotBlank(message = "Name is required")
     @NotEmpty(message = "Name should not be empty")
@@ -35,7 +37,8 @@ public class ContactDto {
     @JsonProperty("phoneNumber")
     private String phoneNumber;
 
-    public ContactDto(Contact contact) {
+    public ResponseContactDto(Contact contact) {
+        this.id = contact.getId();
         this.name = contact.getName();
         this.surname = contact.getSurname();
         this.email = contact.getEmail();

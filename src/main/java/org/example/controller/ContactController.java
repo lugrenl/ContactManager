@@ -2,7 +2,8 @@ package org.example.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.dto.ContactDto;
+import org.example.dto.RequestContactDto;
+import org.example.dto.ResponseContactDto;
 import org.example.service.ContactService;
 import org.example.entity.Contact;
 import org.modelmapper.ModelMapper;
@@ -24,8 +25,8 @@ public class ContactController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public ResponseEntity<ContactDto> addContact(@RequestBody @Valid ContactDto contactDto,
-                                                 BindingResult bindingResult) throws BindException {
+    public ResponseEntity<ResponseContactDto> addContact(@RequestBody @Valid RequestContactDto requestContactDto,
+                                                        BindingResult bindingResult) throws BindException {
         if (bindingResult.hasErrors()) {
             if (bindingResult instanceof BindException exception) {
                 throw exception;
@@ -33,30 +34,30 @@ public class ContactController {
                 throw new BindException(bindingResult);
             }
         } else {
-            Contact contact = modelMapper.map(contactDto, Contact.class);
-            ContactDto savedContact = contactService.addContactToCurrentUser(contact);
+            Contact contact = modelMapper.map(requestContactDto, Contact.class);
+            ResponseContactDto savedContact = contactService.addContactToCurrentUser(contact);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedContact);
         }
     }
 
     @GetMapping("/{contactId}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public ResponseEntity<ContactDto> getContact(@PathVariable("contactId") long contactId) {
-        ContactDto contact = contactService.getContact(contactId);
+    public ResponseEntity<ResponseContactDto> getContact(@PathVariable("contactId") long contactId) {
+        ResponseContactDto contact = contactService.getContact(contactId);
         return ResponseEntity.ok().body(contact);
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public Set<ContactDto> getAllContactsForCurrentUser() {
+    public Set<ResponseContactDto> getAllContactsForCurrentUser() {
         return contactService.getContactsForCurrentUser();
     }
 
     @PutMapping("/{contactId}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public ResponseEntity<ContactDto> updateContact(@PathVariable("contactId") long contactId,
-                                                    @RequestBody @Valid ContactDto contactDto,
-                                                    BindingResult bindingResult) throws BindException {
+    public ResponseEntity<ResponseContactDto> updateContact(@PathVariable("contactId") long contactId,
+                                                            @RequestBody @Valid RequestContactDto requestContactDto,
+                                                            BindingResult bindingResult) throws BindException {
         if (bindingResult.hasErrors()) {
             if (bindingResult instanceof BindException exception) {
                 throw exception;
@@ -64,8 +65,8 @@ public class ContactController {
                 throw new BindException(bindingResult);
             }
         } else {
-            Contact contact = modelMapper.map(contactDto, Contact.class);
-            ContactDto updatedContact = contactService.updateContactForCurrentUser(contactId, contact);
+            Contact contact = modelMapper.map(requestContactDto, Contact.class);
+            ResponseContactDto updatedContact = contactService.updateContactForCurrentUser(contactId, contact);
             return ResponseEntity.ok(updatedContact);
         }
     }
@@ -74,6 +75,6 @@ public class ContactController {
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> deleteContact(@PathVariable("contactId") long contactId) {
         contactService.deleteContactFromCurrentUser(contactId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

@@ -1,7 +1,7 @@
 package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.dto.ContactDto;
+import org.example.dto.ResponseContactDto;
 import org.example.service.ContactService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +16,7 @@ public class ContactsController {
 
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public List<ContactDto> getAllContacts() {
+    public List<ResponseContactDto> getAllContacts() {
         return contactService.getAllContacts();
     }
 
