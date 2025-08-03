@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -31,14 +30,9 @@ public class ContactController {
 
     @GetMapping("/{contactId}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public ContactDto getContact(@PathVariable("contactId") long contactId) {
-        return contactService.getContact(contactId);
-    }
-
-    @GetMapping("/admin")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public List<ContactDto> getAllContacts() {
-        return contactService.getAllContacts();
+    public ResponseEntity<ContactDto> getContact(@PathVariable("contactId") long contactId) {
+        ContactDto contact = contactService.getContact(contactId);
+        return ResponseEntity.ok().body(contact);
     }
 
     @GetMapping
@@ -61,12 +55,5 @@ public class ContactController {
     public ResponseEntity<?> deleteContact(@PathVariable("contactId") long contactId) {
         contactService.deleteContactFromCurrentUser(contactId);
         return ResponseEntity.ok().build();
-    }
-
-    //TODO move to separate controller
-    @PostMapping("/import")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    public void saveAll (@RequestParam("filePath") String filePath) {
-        contactService.saveAll(filePath);
     }
 }

@@ -57,7 +57,7 @@ public class ContactService {
         return new ContactDto(contact);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public ContactDto getContact(long contactId) {
         User user = getCurrentUser();
         if (!user.getContacts().contains(contactDao.getContact(contactId))) {
