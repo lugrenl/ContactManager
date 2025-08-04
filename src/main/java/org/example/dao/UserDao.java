@@ -38,12 +38,11 @@ public class UserDao {
         }
     }
 
-    public User addUser(User user) {
+    public void addUser(User user) {
         try (var session = sessionFactory.openSession()) {
             var transaction = session.beginTransaction();
             session.save(user);
             transaction.commit();
-            return user;
         }
     }
 
@@ -56,7 +55,6 @@ public class UserDao {
                 userToUpdate.setName(user.getName());
                 userToUpdate.setPassword(user.getPassword());
                 userToUpdate.setEmail(user.getEmail());
-                userToUpdate.setRole(user.getRole());
                 
                 // Обновляем
                 if (user.getContacts() != null) {

@@ -67,7 +67,7 @@ public class ContactController {
         } else {
             Contact contact = modelMapper.map(requestContactDto, Contact.class);
             ResponseContactDto updatedContact = contactService.updateContactForCurrentUser(contactId, contact);
-            return ResponseEntity.ok(updatedContact);
+            return ResponseEntity.ok().body(updatedContact);
         }
     }
 

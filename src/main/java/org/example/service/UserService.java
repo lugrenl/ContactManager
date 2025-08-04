@@ -3,7 +3,7 @@ package org.example.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.dao.UserDao;
-import org.example.dto.UserDto;
+import org.example.dto.ResponseUserDto;
 import org.example.exceptions.UserNotFoundException;
 import org.example.entity.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,27 +20,21 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public List<UserDto> getAllUsers() {
-        return userDao.getAllUsers().stream().map(UserDto::new).toList();
+    public List<ResponseUserDto> getAllUsers() {
+        return userDao.getAllUsers().stream().map(ResponseUserDto::new).toList();
     }
 
     @Transactional
-    public UserDto getUser(Long userId) {
-        return new UserDto(userDao.getUser(userId));
+    public ResponseUserDto getUser(Long userId) {
+        return new ResponseUserDto(userDao.getUser(userId));
     }
 
     @Transactional
-    public UserDto addUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return new UserDto(userDao.addUser(user));
-    }
-
-    @Transactional
-    public UserDto updateUser(long userId, User user) {
+    public ResponseUserDto updateUser(long userId, User user) {
         if (user.getPassword() != null) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
-        return new UserDto(userDao.updateUser(userId, user));
+        return new ResponseUserDto(userDao.updateUser(userId, user));
     }
 
     @Transactional
