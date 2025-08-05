@@ -25,7 +25,7 @@ public class UserController {
 
     @GetMapping ("/{userId}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ResponseUserDto> getUser(@PathVariable Long userId) {
+    public ResponseEntity<ResponseUserDto> getUser(@PathVariable("userId") Long userId) {
         return ResponseEntity.ok().body(userService.getUser(userId));
     }
 
