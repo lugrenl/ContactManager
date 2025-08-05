@@ -42,6 +42,20 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.3")
     // https://mvnrepository.com/artifact/org.springframework/spring-test
     testImplementation("org.springframework:spring-test:6.2.2")
+    // https://mvnrepository.com/artifact/org.mockito/mockito-core
+    testImplementation("org.mockito:mockito-core:5.18.0")
+    // https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter
+    testImplementation("org.mockito:mockito-junit-jupiter:5.18.0")
+    // https://mvnrepository.com/artifact/io.rest-assured/rest-assured
+    testImplementation("io.rest-assured:rest-assured:5.5.5")
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test
+    testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.4")
+    // https://mvnrepository.com/artifact/org.testcontainers/testcontainers
+    testImplementation("org.testcontainers:testcontainers:1.21.3")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.8")
+    testImplementation("org.testcontainers:postgresql:1.19.8")
+    // https://mvnrepository.com/artifact/com.github.tomakehurst/wiremock-jre8
+    testImplementation("com.github.tomakehurst:wiremock-jre8:3.1.0")
 
     //Other Dependencies >>
     //LOMBOK Dependencies
