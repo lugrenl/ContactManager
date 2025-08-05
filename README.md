@@ -379,14 +379,31 @@ mvn spring-boot:run
 3. Приложение будет доступно по адресу: `http://localhost:8080`
 
 ## ER-диаграмма
+
 ```mermaid
 erDiagram
-    CONTACT {
-        int id PK
-        string firstName name
-        string lastName surname
-        string phone phoneNumber
-        string email email
+    users ||--o{ user_contacts : ""
+    contacts ||--o{ user_contacts : ""
+    
+    users {
+        bigint user_id PK
+        varchar(255) name
+        varchar(255) password
+        varchar(255) email
+        varchar(20) role
+    }
+    
+    contacts {
+        bigint contact_id PK
+        varchar(20) name
+        varchar(30) surname
+        varchar(50) email
+        varchar(18) phone_number
+    }
+    
+    user_contacts {
+        bigint user_id FK
+        bigint contact_id FK
     }
 ```
 
