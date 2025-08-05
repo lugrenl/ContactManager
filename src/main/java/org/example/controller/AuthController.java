@@ -7,17 +7,16 @@ import org.example.dto.RegistrationDto;
 import org.example.entity.User;
 import org.example.service.JWTUtil;
 import org.example.service.RegistrationService;
+import org.example.service.TokenBlacklistService;
 import org.example.util.UserValidator;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -31,6 +30,7 @@ public class AuthController {
     private final JWTUtil jwtUtil;
     private final ModelMapper modelMapper;
     private final AuthenticationManager authenticationManager;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/register")
     public Map<String, String> performRegistration(@RequestBody @Valid RegistrationDto registrationDto,
@@ -72,7 +72,14 @@ public class AuthController {
         return this.modelMapper.map(registrationDto, User.class);
     }
 
-    // TODO : implement registration for admin
-    // TODO : implement logout
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            tokenBlacklistService.blacklistToken(token);
+            return ResponseEntity.ok().body("Logged out successfully");
+        }
+        return ResponseEntity.badRequest().body("Invalid token");
+    }
 }
 

@@ -9,6 +9,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.service.JWTUtil;
+import org.example.service.TokenBlacklistService;
 import org.example.service.UserDetailsServiceImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -37,13 +39,22 @@ public class JWTFilter extends OncePerRequestFilter {
 
         // Пропускаем запросы без заголовка Authorization
         String authHeader = request.getHeader(AUTH_HEADER);
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX) && authHeader.isBlank()) {
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX) || authHeader.isBlank()) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Извлекаем JWT токен
+        // Извлекаем токен из заголовка
         String jwt = authHeader.substring(BEARER_PREFIX.length());
+
+        // Проверяем, не в черном ли списке токен
+        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+            log.warn("Attempt to use blacklisted token");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has been blacklisted");
+            return;
+        }
+
+        // JWT токен уже извлечен выше
         if (jwt.isBlank()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT Token");
             return;
