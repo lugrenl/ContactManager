@@ -383,10 +383,10 @@ mvn spring-boot:run
 erDiagram
     CONTACT {
         int id PK
-        string firstName
-        string lastName
-        string phone
-        string email
+        string firstName name
+        string lastName surname
+        string phone phoneNumber
+        string email email
     }
 ```
 
