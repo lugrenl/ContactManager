@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -169,7 +168,7 @@ class UserServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> userService.getUserByUsername("nonexistent"))
-                .isInstanceOf(UsernameNotFoundException.class)
+                .isInstanceOf(UserNotFoundException.class)
                 .hasMessage("User not found with username: nonexistent");
         verify(userDao).findByUsername("nonexistent");
     }
