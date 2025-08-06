@@ -36,26 +36,39 @@ dependencies {
 
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     testImplementation("ch.qos.logback:logback-classic:1.5.16")
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
     // https://mvnrepository.com/artifact/org.assertj/assertj-core
     testImplementation("org.assertj:assertj-core:3.27.3")
+
+    //Spring Test Dependencies
     // https://mvnrepository.com/artifact/org.springframework/spring-test
-    testImplementation("org.springframework:spring-test:6.2.2")
+    testImplementation("org.springframework:spring-test:6.2.9")
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test
+    testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.4")
+
+    // Mockito Dependencies
     // https://mvnrepository.com/artifact/org.mockito/mockito-core
     testImplementation("org.mockito:mockito-core:5.18.0")
     // https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter
     testImplementation("org.mockito:mockito-junit-jupiter:5.18.0")
+
     // https://mvnrepository.com/artifact/io.rest-assured/rest-assured
     testImplementation("io.rest-assured:rest-assured:5.5.5")
-    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.4")
+
+    //TestContainers Dependencies
     // https://mvnrepository.com/artifact/org.testcontainers/testcontainers
     testImplementation("org.testcontainers:testcontainers:1.21.3")
-    testImplementation("org.testcontainers:junit-jupiter:1.19.8")
-    testImplementation("org.testcontainers:postgresql:1.19.8")
-    // https://mvnrepository.com/artifact/com.github.tomakehurst/wiremock-jre8
-    testImplementation("com.github.tomakehurst:wiremock-jre8:3.1.0")
+    testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+    testImplementation("org.testcontainers:postgresql:1.21.3")
+
+    //Junit Dependencies
+    // https://mvnrepository.com/artifact/org.junit.platform/junit-platform-engine
+    testImplementation("org.junit.platform:junit-platform-engine:1.13.4")
+    // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.13.4")
+    // https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.13.4")
+    // https://mvnrepository.com/artifact/org.junit.platform/junit-platform-launcher
+    testImplementation("org.junit.platform:junit-platform-launcher:1.13.4")
 
     //Other Dependencies >>
     //LOMBOK Dependencies
