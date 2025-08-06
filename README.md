@@ -73,6 +73,7 @@ RESTful веб-сервис для управления контактами, р
 - `200 OK` - успешный запрос
 - `201 Created` - ресурс успешно создан
 - `400 Bad Request` - неверные входные данные
+- `403 Forbidden` - доступ запрещен
 - `404 Not Found` - ресурс не найден
 - `500 Internal Server Error` - внутренняя ошибка сервера
 
@@ -369,25 +370,6 @@ curl -X PUT http://localhost:8080/api/users/1 \
   -H "Authorization: Bearer ваш_jwt_токен" \
   -d '{"username":"newUsername","email":"new@example.com","password":"newPassword123"}'
 ```
-
-## Лицензия
-Этот проект лицензирован под MIT License.
-
-## Технологический стек
-- Java 17+
-- Spring Boot 3.x
-- Spring Data JPA
-- PostgreSQL
-- Lombok
-- Spring Validation
-
-## Запуск приложения
-1. Установите Maven и JDK 17+
-2. Выполните команду:
-```bash
-mvn spring-boot:run
-```
-3. Приложение будет доступно по адресу: `http://localhost:8080`
 
 ## ER-диаграмма
 
