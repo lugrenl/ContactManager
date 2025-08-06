@@ -4,6 +4,7 @@ import org.example.entity.Contact;
 import org.example.exceptions.ContactNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,7 +94,7 @@ class HibernateContactDaoTests {
     @Test
     void testAddContact() {
         // Arrange
-        org.hibernate.Transaction transaction = mock(org.hibernate.Transaction.class);
+        Transaction transaction = mock(Transaction.class);
         when(session.beginTransaction()).thenReturn(transaction);
         when(session.save(any(Contact.class))).thenReturn(1L);
 
@@ -116,7 +117,7 @@ class HibernateContactDaoTests {
         updatedContact.setEmail("jane.smith@example.com");
         updatedContact.setPhoneNumber("+1987654321");
 
-        org.hibernate.Transaction transaction = mock(org.hibernate.Transaction.class);
+        Transaction transaction = mock(Transaction.class);
         when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(Contact.class, 1L)).thenReturn(testContact);
 
@@ -151,7 +152,7 @@ class HibernateContactDaoTests {
     @Test
     void testDeleteContact_ContactExists() {
         // Arrange
-        org.hibernate.Transaction transaction = mock(org.hibernate.Transaction.class);
+        Transaction transaction = mock(Transaction.class);
         when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(Contact.class, 1L)).thenReturn(testContact);
 
@@ -169,7 +170,7 @@ class HibernateContactDaoTests {
     void testDeleteContact_ContactNotExists() {
         // Arrange
         when(session.get(Contact.class, 999L)).thenReturn(null);
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
+        when(session.getTransaction()).thenReturn(mock(Transaction.class));
 
         // Act & Assert
         assertThrows(ContactNotFoundException.class, 
@@ -220,7 +221,7 @@ class HibernateContactDaoTests {
         List<Contact> contacts = Arrays.asList(
                 new Contact(), new Contact(), new Contact()
         );
-        org.hibernate.Transaction transaction = mock(org.hibernate.Transaction.class);
+        Transaction transaction = mock(Transaction.class);
         when(session.beginTransaction()).thenReturn(transaction);
 
         // Act
