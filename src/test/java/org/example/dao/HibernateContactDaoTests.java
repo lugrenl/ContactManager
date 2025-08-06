@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class HibernateContactDaoTest {
+class HibernateContactDaoTests {
 
     @Mock
     private SessionFactory sessionFactory;
@@ -93,20 +93,22 @@ class HibernateContactDaoTest {
     @Test
     void testAddContact() {
         // Arrange
+        org.hibernate.Transaction transaction = mock(org.hibernate.Transaction.class);
+        when(session.beginTransaction()).thenReturn(transaction);
         when(session.save(any(Contact.class))).thenReturn(1L);
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
 
         // Act
         long contactId = contactDao.addContact(testContact);
 
         // Assert
         assertEquals(1L, contactId);
+        verify(session).beginTransaction();
         verify(session).save(any(Contact.class));
-        verify(session.getTransaction()).commit();
+        verify(transaction).commit();
     }
 
     @Test
-    void testUpdateContact() {
+    void testUpdateContact_ContactExists() {
         // Arrange
         Contact updatedContact = new Contact();
         updatedContact.setName("Jane");
@@ -114,8 +116,9 @@ class HibernateContactDaoTest {
         updatedContact.setEmail("jane.smith@example.com");
         updatedContact.setPhoneNumber("+1987654321");
 
+        org.hibernate.Transaction transaction = mock(org.hibernate.Transaction.class);
+        when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(Contact.class, 1L)).thenReturn(testContact);
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
 
         // Act
         Contact result = contactDao.updateContact(1L, updatedContact);
@@ -126,7 +129,10 @@ class HibernateContactDaoTest {
         assertEquals("Smith", result.getSurname());
         assertEquals("jane.smith@example.com", result.getEmail());
         assertEquals("+1987654321", result.getPhoneNumber());
-        verify(session.getTransaction()).commit();
+
+        verify(session).beginTransaction();
+        verify(session).get(Contact.class, 1L);
+        verify(transaction).commit();
     }
 
     @Test
@@ -143,17 +149,20 @@ class HibernateContactDaoTest {
     }
 
     @Test
-    void testDeleteContact() {
+    void testDeleteContact_ContactExists() {
         // Arrange
+        org.hibernate.Transaction transaction = mock(org.hibernate.Transaction.class);
+        when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(Contact.class, 1L)).thenReturn(testContact);
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
 
         // Act
         contactDao.deleteContact(1L);
 
         // Assert
+        verify(session).beginTransaction();
+        verify(session).get(Contact.class, 1L);
         verify(session).remove(testContact);
-        verify(session.getTransaction()).commit();
+        verify(transaction).commit();
     }
 
     @Test
@@ -209,15 +218,17 @@ class HibernateContactDaoTest {
     void testSaveAll() {
         // Arrange
         List<Contact> contacts = Arrays.asList(
-            new Contact(), new Contact(), new Contact()
+                new Contact(), new Contact(), new Contact()
         );
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
+        org.hibernate.Transaction transaction = mock(org.hibernate.Transaction.class);
+        when(session.beginTransaction()).thenReturn(transaction);
 
         // Act
         contactDao.saveAll(contacts);
 
         // Assert
+        verify(session).beginTransaction();
         verify(session, times(3)).save(any(Contact.class));
-        verify(session.getTransaction()).commit();
+        verify(transaction).commit();
     }
 }
