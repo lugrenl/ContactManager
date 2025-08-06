@@ -20,7 +20,7 @@ public class User {
     @Column(name = "user_id")
     @NotNull(message = "Id should not be null")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private long id;
 
     @NotBlank(message = "Username is required")
     @NotEmpty(message = "Username should not be empty")

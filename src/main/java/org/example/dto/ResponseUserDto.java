@@ -11,7 +11,7 @@ import org.example.entity.User;
 public class ResponseUserDto {
 
     @NotNull(message = "Id should not be null")
-    private int id;
+    private long id;
 
     @NotBlank(message = "Username is required")
     @NotEmpty(message = "Username should not be empty")
