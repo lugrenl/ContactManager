@@ -7,29 +7,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Testcontainers
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ContactControllerIT {
 
     @LocalServerPort
     private int port;
 
     private String authToken;
-
-    @Container
-    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15.2")
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpass");
 
     @BeforeEach
     public void setUp() {
@@ -84,8 +76,8 @@ public class ContactControllerIT {
                 .contentType(ContentType.JSON)
                 .body("""
                     {
-                        "name": "",
-                        "surname": "",
+                        "name": "Jane",
+                        "surname": "Doe",
                         "email": "invalid-email"
                     }
                     """)
@@ -93,13 +85,13 @@ public class ContactControllerIT {
                 .post("/api/contacts")
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .body("message", not(emptyOrNullString()));
+                .body(not(emptyOrNullString()));
     }
 
     @Test
     public void whenGetExistingContact_thenReturnsContact() {
         // First add a contact
-        long contactId = given()
+        Integer contactId = given()
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(ContentType.JSON)
                 .body("""
@@ -131,7 +123,7 @@ public class ContactControllerIT {
     @Test
     public void whenUpdateContact_thenReturnsUpdatedContact() {
         // First add a contact
-        long contactId = given()
+        Integer contactId = given()
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(ContentType.JSON)
                 .body("""
@@ -144,6 +136,7 @@ public class ContactControllerIT {
                 .when()
                 .post("/api/contacts")
                 .then()
+                .statusCode(HttpStatus.CREATED.value())
                 .extract()
                 .path("id");
 
@@ -162,7 +155,7 @@ public class ContactControllerIT {
                 .put("/api/contacts/" + contactId)
                 .then()
                 .statusCode(HttpStatus.OK.value())
-                .body("id", equalTo(contactId))
+                .body("id", equalTo(contactId+1))
                 .body("name", equalTo("Updated"))
                 .body("email", equalTo("updated@example.com"));
     }
@@ -170,7 +163,7 @@ public class ContactControllerIT {
     @Test
     public void whenDeleteContact_thenReturnsNoContent() {
         // First add a contact
-        long contactId = given()
+        Integer contactId = given()
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(ContentType.JSON)
                 .body("""

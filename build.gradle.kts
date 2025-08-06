@@ -53,6 +53,8 @@ dependencies {
 
     // https://mvnrepository.com/artifact/io.rest-assured/rest-assured
     testImplementation("io.rest-assured:rest-assured:5.5.5")
+    // https://mvnrepository.com/artifact/com.h2database/h2
+    testImplementation("com.h2database:h2:2.3.232")
 
     //TestContainers Dependencies
     // https://mvnrepository.com/artifact/org.testcontainers/testcontainers
