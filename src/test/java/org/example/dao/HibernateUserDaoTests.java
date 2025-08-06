@@ -4,6 +4,7 @@ import org.example.entity.User;
 import org.example.exceptions.UserNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,15 +92,17 @@ class HibernateUserDaoTests {
     @Test
     void testAddUser() {
         // Arrange
-        doNothing().when(session).save(any(User.class));
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
+        Transaction transaction = mock(Transaction.class);
+        when(session.beginTransaction()).thenReturn(transaction);
+        when(session.save(any(User.class))).thenReturn(1L);
 
         // Act
         userDao.addUser(testUser);
 
         // Assert
+        verify(session).beginTransaction();
         verify(session).save(any(User.class));
-        verify(session.getTransaction()).commit();
+        verify(transaction).commit();
     }
 
     @Test
@@ -110,9 +113,10 @@ class HibernateUserDaoTests {
         updatedUser.setPassword("newpassword");
         updatedUser.setEmail("updated@example.com");
 
+        Transaction transaction = mock(Transaction.class);
+        when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(User.class, 1L)).thenReturn(testUser);
         when(session.merge(any(User.class))).thenReturn(testUser);
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
 
         // Act
         User result = userDao.updateUser(1L, updatedUser);
@@ -122,21 +126,26 @@ class HibernateUserDaoTests {
         assertEquals("updateduser", result.getName());
         assertEquals("newpassword", result.getPassword());
         assertEquals("updated@example.com", result.getEmail());
-        verify(session.getTransaction()).commit();
+        verify(session).beginTransaction();
+        verify(session).get(User.class, 1L);
+        verify(transaction).commit();
     }
 
     @Test
-    void testDeleteUser() {
+    void testDeleteUser_UserExists() {
         // Arrange
+        Transaction transaction = mock(Transaction.class);
+        when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(User.class, 1L)).thenReturn(testUser);
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
 
         // Act
         userDao.deleteUser(1L);
 
         // Assert
+        verify(session).beginTransaction();
+        verify(session).get(User.class, 1L);
         verify(session).remove(testUser);
-        verify(session.getTransaction()).commit();
+        verify(transaction).commit();
     }
 
     @Test
