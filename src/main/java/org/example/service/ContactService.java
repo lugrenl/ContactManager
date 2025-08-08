@@ -132,8 +132,7 @@ public class ContactService {
         savedContact.setId(savedContactId);
 
         // 6. Обновляем связь между контактом и пользователем
-        existingContact.getUsers().remove(currentUser);
-        currentUser.getContacts().remove(existingContact);
+        existingContact.removeUser(currentUser);
         currentUser.addContact(savedContact);
 
         // 7. Сохраняем пользователя с новой связью

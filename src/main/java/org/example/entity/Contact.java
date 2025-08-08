@@ -51,7 +51,8 @@ public class Contact {
         users.add(user);
         user.getContacts().add(this);
     }
-    
+
+    // Вспомогательный метод для двунаправленного удаления
     public void removeUser(User user) {
         users.remove(user);
         user.getContacts().remove(this);
