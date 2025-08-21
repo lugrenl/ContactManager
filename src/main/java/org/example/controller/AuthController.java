@@ -1,5 +1,11 @@
 package org.example.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.AuthenticationDto;
@@ -10,6 +16,7 @@ import org.example.service.RegistrationService;
 import org.example.service.TokenBlacklistService;
 import org.example.util.UserValidator;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -23,6 +30,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "APIs for user authentication and registration")
 public class AuthController {
 
     private final RegistrationService registrationService;
@@ -32,9 +40,20 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final TokenBlacklistService tokenBlacklistService;
 
-    @PostMapping("/register")
-    public Map<String, String> performRegistration(@RequestBody @Valid RegistrationDto registrationDto,
-                                                   BindingResult bindingResult) throws BindException {
+    @Operation(summary = "Register a new user", description = "Creates a new user account and returns a JWT token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User registered successfully", 
+                    content = @Content(mediaType = "application/json", 
+                    schema = @Schema(implementation = Map.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    @PostMapping(value = "/register", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, String> performRegistration(@io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "User registration details", 
+            required = true,
+            content = @Content(schema = @Schema(implementation = RegistrationDto.class)))
+            @RequestBody @Valid RegistrationDto registrationDto,
+            BindingResult bindingResult) throws BindException {
         User user = convertToUser(registrationDto);
         userValidator.validate(user, bindingResult);
 
@@ -51,8 +70,19 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/login")
-    public Map<String, String> performLogin(@RequestBody AuthenticationDto authenticationDTO) {
+    @Operation(summary = "User login", description = "Authenticates a user and returns a JWT token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Login successful", 
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Map.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid credentials")
+    })
+    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, String> performLogin(@io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "User login credentials", 
+            required = true,
+            content = @Content(schema = @Schema(implementation = AuthenticationDto.class)))
+            @RequestBody AuthenticationDto authenticationDTO) {
 
         UsernamePasswordAuthenticationToken authInputToken =
                 new UsernamePasswordAuthenticationToken(authenticationDTO.getName(),
@@ -72,8 +102,18 @@ public class AuthController {
         return this.modelMapper.map(registrationDto, User.class);
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
+    @Operation(summary = "User logout", description = "Invalidates the current user's JWT token")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Logout successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid token")
+    })
+    @PostMapping(value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> logout(
+            @io.swagger.v3.oas.annotations.Parameter(
+                    description = "JWT token in the format 'Bearer {token}'",
+                    required = true,
+                    example = "Bearer your.jwt.token.here")
+            @RequestHeader("Authorization") String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             tokenBlacklistService.blacklistToken(token);
