@@ -13,6 +13,7 @@ import org.example.dto.AuthenticationDto;
 import org.example.dto.RegistrationDto;
 import org.example.entity.User;
 import org.example.exceptions.IncorrectCredentialsException;
+import org.example.exceptions.TokenException;
 import org.example.service.JWTUtil;
 import org.example.service.RegistrationService;
 import org.example.service.TokenBlacklistService;
@@ -110,22 +111,35 @@ public class AuthController {
 
     @Operation(summary = "User logout", description = "Invalidates the current user's JWT token")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Logout successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid token")
+            @ApiResponse(responseCode = "200", description = "Logout successful",
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid or missing token",
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @PostMapping(value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> logout(
+    public ResponseEntity<String> logout(
             @io.swagger.v3.oas.annotations.Parameter(
                     description = "JWT token in the format 'Bearer {token}'",
                     required = true,
                     example = "Bearer your.jwt.token.here")
             @RequestHeader("Authorization") String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new TokenException("Invalid or missing Authorization header. Expected format: 'Bearer <token>'");
+        }
+        
+        String token = authHeader.substring(7);
+        if (token.isBlank()) {
+            throw new TokenException("Token cannot be empty");
+        }
+        
+        try {
             tokenBlacklistService.blacklistToken(token);
             return ResponseEntity.ok().body("Logged out successfully");
+        } catch (Exception e) {
+            throw new TokenException("Failed to process logout: " + e.getMessage());
         }
-        return ResponseEntity.badRequest().body("Invalid token");
     }
 }
 

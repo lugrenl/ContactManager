@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.dto.AppErrorResponse;
 import org.example.exceptions.ContactNotFoundException;
 import org.example.exceptions.IncorrectCredentialsException;
+import org.example.exceptions.TokenException;
 import org.example.exceptions.UserAlreadyExistsException;
 import org.example.dto.ValidationErrorResponse;
 import org.springframework.context.MessageSource;
@@ -53,6 +54,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IncorrectCredentialsException.class)
     public ResponseEntity<AppErrorResponse> handleIncorrectCredentialsException(IncorrectCredentialsException e) {
+        AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+    
+    @ExceptionHandler(TokenException.class)
+    public ResponseEntity<AppErrorResponse> handleTokenException(TokenException e) {
         AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }

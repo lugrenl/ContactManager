@@ -14,6 +14,7 @@ import org.example.service.UserDetailsServiceImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.example.exceptions.TokenException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -31,6 +32,7 @@ public class JWTFilter extends OncePerRequestFilter {
     private final JWTUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -50,13 +52,15 @@ public class JWTFilter extends OncePerRequestFilter {
         // Проверяем, не в черном ли списке токен
         if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
             log.warn("Attempt to use blacklisted token");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has been blacklisted");
+            jwtAuthenticationEntryPoint.commence(request, response, 
+                new TokenException("Token has been blacklisted"));
             return;
         }
 
         // JWT токен уже извлечен выше
         if (jwt.isBlank()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT Token");
+            jwtAuthenticationEntryPoint.commence(request, response, 
+                new TokenException("Invalid JWT Token: Token is empty"));
             return;
         }
 
@@ -80,11 +84,13 @@ public class JWTFilter extends OncePerRequestFilter {
 
         } catch (JWTVerificationException e) {
             log.warn("Invalid JWT token: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT Token");
+            jwtAuthenticationEntryPoint.commence(request, response, 
+                new TokenException("Invalid JWT Token: " + e.getMessage()));
             return;
         } catch (UsernameNotFoundException e) {
             log.warn("User not found: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "User not found");
+            jwtAuthenticationEntryPoint.commence(request, response, 
+                new TokenException("User not found: " + e.getMessage()));
             return;
         }
 
