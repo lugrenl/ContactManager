@@ -12,6 +12,7 @@ import org.example.dto.AuthenticationDto;
 import org.example.dto.ContactErrorResponse;
 import org.example.dto.RegistrationDto;
 import org.example.entity.User;
+import org.example.exceptions.IncorrectCredentialsException;
 import org.example.service.JWTUtil;
 import org.example.service.RegistrationService;
 import org.example.service.TokenBlacklistService;
@@ -20,8 +21,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -78,7 +79,9 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Login successful", 
                     content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = Map.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid credentials")
+            @ApiResponse(responseCode = "401", description = "Invalid credentials",
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ContactErrorResponse.class)))
     })
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, String> performLogin(@io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -93,8 +96,8 @@ public class AuthController {
 
         try {
             authenticationManager.authenticate(authInputToken);
-        } catch (BadCredentialsException e) {
-            return Map.of("message", "Incorrect credentials!");
+        } catch (AuthenticationException e) {
+            throw new IncorrectCredentialsException("Incorrect credentials!");
         }
 
         String token = jwtUtil.generateToken(authenticationDTO.getName());

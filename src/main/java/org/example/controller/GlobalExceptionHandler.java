@@ -2,6 +2,7 @@ package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.exceptions.ContactNotFoundException;
+import org.example.exceptions.IncorrectCredentialsException;
 import org.example.exceptions.UserAlreadyExistsException;
 import org.example.dto.ContactErrorResponse;
 import org.example.dto.ValidationErrorResponse;
@@ -48,6 +49,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ContactErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
         ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(IncorrectCredentialsException.class)
+    public ResponseEntity<ContactErrorResponse> handleIncorrectCredentialsException(IncorrectCredentialsException e) {
+        ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(BindException.class)
