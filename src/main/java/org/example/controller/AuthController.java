@@ -8,8 +8,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.dto.AppErrorResponse;
 import org.example.dto.AuthenticationDto;
-import org.example.dto.ContactErrorResponse;
 import org.example.dto.RegistrationDto;
 import org.example.entity.User;
 import org.example.exceptions.IncorrectCredentialsException;
@@ -49,7 +49,7 @@ public class AuthController {
                     schema = @Schema(implementation = Map.class))),
             @ApiResponse(responseCode = "409", description = "User with this username already exists",
                     content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = ContactErrorResponse.class)))
+                    schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @PostMapping(value = "/register", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, String> performRegistration(@io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -81,7 +81,7 @@ public class AuthController {
                     schema = @Schema(implementation = Map.class))),
             @ApiResponse(responseCode = "401", description = "Invalid credentials",
                     content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = ContactErrorResponse.class)))
+                    schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, String> performLogin(@io.swagger.v3.oas.annotations.parameters.RequestBody(

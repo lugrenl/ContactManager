@@ -1,10 +1,10 @@
 package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.dto.AppErrorResponse;
 import org.example.exceptions.ContactNotFoundException;
 import org.example.exceptions.IncorrectCredentialsException;
 import org.example.exceptions.UserAlreadyExistsException;
-import org.example.dto.ContactErrorResponse;
 import org.example.dto.ValidationErrorResponse;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
@@ -40,20 +40,20 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({ContactNotFoundException.class})
-    private ResponseEntity<ContactErrorResponse> handleContactNotFoundException(ContactNotFoundException e) {
-        ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
+    private ResponseEntity<AppErrorResponse> handleContactNotFoundException(ContactNotFoundException e) {
+        AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ContactErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
-        ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
+    public ResponseEntity<AppErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
+        AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(IncorrectCredentialsException.class)
-    public ResponseEntity<ContactErrorResponse> handleIncorrectCredentialsException(IncorrectCredentialsException e) {
-        ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
+    public ResponseEntity<AppErrorResponse> handleIncorrectCredentialsException(IncorrectCredentialsException e) {
+        AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
