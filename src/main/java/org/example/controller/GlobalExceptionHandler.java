@@ -2,6 +2,7 @@ package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.exceptions.ContactNotFoundException;
+import org.example.exceptions.UserAlreadyExistsException;
 import org.example.dto.ContactErrorResponse;
 import org.example.dto.ValidationErrorResponse;
 import org.springframework.context.MessageSource;
@@ -41,6 +42,12 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ContactErrorResponse> handleContactNotFoundException(ContactNotFoundException e) {
         ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ContactErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
+        ContactErrorResponse response = new ContactErrorResponse(e.getMessage(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(BindException.class)

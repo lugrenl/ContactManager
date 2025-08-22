@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.AuthenticationDto;
+import org.example.dto.ContactErrorResponse;
 import org.example.dto.RegistrationDto;
 import org.example.entity.User;
 import org.example.service.JWTUtil;
@@ -45,7 +46,9 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "User registered successfully", 
                     content = @Content(mediaType = "application/json", 
                     schema = @Schema(implementation = Map.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input")
+            @ApiResponse(responseCode = "409", description = "User with this username already exists",
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ContactErrorResponse.class)))
     })
     @PostMapping(value = "/register", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, String> performRegistration(@io.swagger.v3.oas.annotations.parameters.RequestBody(
