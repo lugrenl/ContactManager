@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.dto.AppErrorResponse;
 import org.example.dto.RequestUserDto;
 import org.example.dto.ResponseUserDto;
 import org.example.entity.User;
@@ -22,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.example.exceptions.UserNotFoundException;
 
 import java.util.List;
 
@@ -40,14 +42,19 @@ public class UserController {
                     content = @Content(schema = @Schema(implementation = ResponseUserDto.class))),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
-            @ApiResponse(responseCode = "404", description = "User not found")
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @GetMapping(value = "/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseUserDto> getUser(
             @io.swagger.v3.oas.annotations.Parameter(description = "ID of the user to retrieve", required = true)
             @PathVariable("userId") Long userId) {
-        return ResponseEntity.ok().body(userService.getUser(userId));
+        try {
+            return ResponseEntity.ok().body(userService.getUser(userId));
+        } catch (UserNotFoundException e) {
+            throw new UserNotFoundException("User not found with id: " + userId);
+        }
     }
 
     @Operation(summary = "Get all users", description = "Retrieves a list of all users (Admin only)")
@@ -70,7 +77,8 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Invalid input"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
-            @ApiResponse(responseCode = "404", description = "User not found")
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @PutMapping(value = "/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -100,14 +108,20 @@ public class UserController {
             @ApiResponse(responseCode = "204", description = "User deleted successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
-            @ApiResponse(responseCode = "404", description = "User not found")
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteUser(
             @io.swagger.v3.oas.annotations.Parameter(description = "ID of the user to delete", required = true)
             @PathVariable("userId") long userId) {
-        userService.deleteContact(userId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        try {
+            userService.deleteUser(userId);
+            return ResponseEntity.noContent().build();
+        } catch (UserNotFoundException e) {
+            throw new UserNotFoundException("User not found with id: " + userId);
+        }
     }
 }

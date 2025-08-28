@@ -26,7 +26,9 @@ public class UserService {
 
     @Transactional
     public ResponseUserDto getUser(Long userId) {
-        return new ResponseUserDto(userDao.getUser(userId));
+        return userDao.findById(userId)
+                .map(ResponseUserDto::new)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
     }
 
     @Transactional
@@ -38,8 +40,11 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteContact(long contactId) {
-        userDao.deleteUser(contactId);
+    public void deleteUser(long userId) {
+        if (!userDao.existsById(userId)) {
+            throw new UserNotFoundException("User not found with id: " + userId);
+        }
+        userDao.deleteUser(userId);
     }
 
     @Transactional

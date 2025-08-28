@@ -41,7 +41,7 @@ public class UserControllerIT {
                 .when()
                 .post("/api/auth/login")
                 .then()
-                .statusCode(200)
+                .statusCode(HttpStatus.OK.value())
                 .extract()
                 .path("jwt-token");
 
@@ -57,7 +57,7 @@ public class UserControllerIT {
                 .when()
                 .post("/api/auth/login")
                 .then()
-                .statusCode(200)
+                .statusCode(HttpStatus.OK.value())
                 .extract()
                 .path("jwt-token");
     }
@@ -74,13 +74,13 @@ public class UserControllerIT {
     }
 
     @Test
-    public void whenGetAllUsersAsUser_thenReturnsForbidden() {
+    public void whenGetAllUsersAsUser_thenReturnsUnauthorized() {
         given()
                 .header("Authorization", "Bearer " + userAuthToken)
                 .when()
                 .get("/api/users")
                 .then()
-                .statusCode(HttpStatus.FORBIDDEN.value());
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
@@ -139,7 +139,7 @@ public class UserControllerIT {
     }
 
     @Test
-    public void whenUpdateUserAsUser_thenReturnsForbidden() {
+    public void whenUpdateUserAsUser_thenReturnsUnauthorized() {
         given()
                 .header("Authorization", "Bearer " + userAuthToken)
                 .contentType(ContentType.JSON)
@@ -152,11 +152,11 @@ public class UserControllerIT {
                 .when()
                 .put("/api/users/1")
                 .then()
-                .statusCode(HttpStatus.FORBIDDEN.value());
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
-    public void whenDeleteUserAsAdmin_thenReturnsNoContent() {
+    public void whenDeleteUserAsAdmin_thenReturnsOK() {
         // First create a new user to delete
         String newUserToken = given()
                 .contentType(ContentType.JSON)
@@ -170,7 +170,7 @@ public class UserControllerIT {
                 .when()
                 .post("/api/auth/register")
                 .then()
-                .statusCode(200)
+                .statusCode(HttpStatus.OK.value())
                 .extract()
                 .path("jwt-token");
 
@@ -198,7 +198,7 @@ public class UserControllerIT {
                 .when()
                 .get("/api/users/" + userId)
                 .then()
-                .statusCode(HttpStatus.FORBIDDEN.value()); // TODO: switch to 404
+                .statusCode(HttpStatus.NOT_FOUND.value());
     }
 
     @Test

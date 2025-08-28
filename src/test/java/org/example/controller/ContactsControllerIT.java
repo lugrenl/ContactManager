@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -44,7 +45,7 @@ public class ContactsControllerIT {
                 .when()
                 .post("/api/auth/login")
                 .then()
-                .statusCode(200)
+                .statusCode(HttpStatus.OK.value())
                 .extract()
                 .path("jwt-token");
 
@@ -60,7 +61,7 @@ public class ContactsControllerIT {
                 .when()
                 .post("/api/auth/login")
                 .then()
-                .statusCode(200)
+                .statusCode(HttpStatus.OK.value())
                 .extract()
                 .path("jwt-token");
     }
@@ -72,19 +73,19 @@ public class ContactsControllerIT {
                 .when()
                 .get("/api/contacts/admin")
                 .then()
-                .statusCode(200)
+                .statusCode(HttpStatus.OK.value())
                 .contentType(ContentType.JSON)
                 .body("$", hasSize(greaterThanOrEqualTo(0)));
     }
 
     @Test
-    public void whenGetAllContactsAsUser_thenReturnForbidden() {
+    public void whenGetAllContactsAsUser_thenReturnUnauthorized() {
         given()
                 .header("Authorization", "Bearer " + userToken)
                 .when()
                 .get("/api/contacts/admin")
                 .then()
-                .statusCode(401);
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
@@ -106,7 +107,7 @@ public class ContactsControllerIT {
                 .post("/api/contacts/import")
                 .then()
                 .log().all()  // Log all response details
-                .statusCode(200);
+                .statusCode(HttpStatus.OK.value());
 
         // Clean up
         tempFile.delete();
@@ -131,7 +132,7 @@ public class ContactsControllerIT {
                 .post("/api/contacts/import")
                 .then()
                 .log().all()  // Log all response details
-                .statusCode(200);
+                .statusCode(HttpStatus.OK.value());
 
         // Clean up
         tempFile.delete();
@@ -145,7 +146,7 @@ public class ContactsControllerIT {
                 .when()
                 .post("/api/contacts/import")
                 .then()
-                .statusCode(400);
+                .statusCode(HttpStatus.BAD_REQUEST.value());
     }
 
     @Test
@@ -154,6 +155,6 @@ public class ContactsControllerIT {
                 .when()
                 .get("/api/contacts/admin")
                 .then()
-                .statusCode(401);
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 }

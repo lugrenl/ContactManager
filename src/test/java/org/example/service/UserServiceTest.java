@@ -63,7 +63,7 @@ class UserServiceTest {
     @Test
     void getUser_WithValidId_ReturnsUser() {
         // Arrange
-        when(userDao.getUser(1L)).thenReturn(testUser);
+        when(userDao.findById(1L)).thenReturn(Optional.of(testUser));
 
         // Act
         ResponseUserDto result = userService.getUser(1L);
@@ -72,19 +72,19 @@ class UserServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getName()).isEqualTo("testuser");
-        verify(userDao).getUser(1L);
+        verify(userDao).findById(1L);
     }
 
     @Test
     void getUser_WithInvalidId_ThrowsUserNotFoundException() {
         // Arrange
-        when(userDao.getUser(999L)).thenThrow(new UserNotFoundException("User not found with ID: 999"));
+        when(userDao.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThatThrownBy(() -> userService.getUser(999L))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("User not found with ID: 999");
-        verify(userDao).getUser(999L);
+                .hasMessage("User not found with id: 999");
+        verify(userDao).findById(999L);
     }
 
     @Test
@@ -138,11 +138,16 @@ class UserServiceTest {
     }
 
     @Test
-    void deleteContact_WithValidId_DeletesUser() {
+    void deleteUser_WithValidId_DeletesUser() {
+        // Arrange
+        when(userDao.existsById(1L)).thenReturn(true);
+        doNothing().when(userDao).deleteUser(1L);
+
         // Act
-        userService.deleteContact(1L);
+        userService.deleteUser(1L);
 
         // Assert
+        verify(userDao).existsById(1L);
         verify(userDao).deleteUser(1L);
     }
 
@@ -186,13 +191,29 @@ class UserServiceTest {
     }
 
     @Test
-    void deleteContact_WhenDaoThrowsException_PropagatesException() {
+    void deleteUser_WhenUserDoesNotExist_ThrowsUserNotFoundException() {
         // Arrange
-        doThrow(new RuntimeException("Delete failed")).when(userDao).deleteUser(anyLong());
+        when(userDao.existsById(1L)).thenReturn(false);
 
         // Act & Assert
-        assertThatThrownBy(() -> userService.deleteContact(1L))
+        assertThatThrownBy(() -> userService.deleteUser(1L))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found with id: 1");
+        verify(userDao).existsById(1L);
+        verify(userDao, never()).deleteUser(anyLong());
+    }
+
+    @Test
+    void deleteUser_WhenDaoThrowsException_PropagatesException() {
+        // Arrange
+        when(userDao.existsById(1L)).thenReturn(true);
+        doThrow(new RuntimeException("Delete failed")).when(userDao).deleteUser(1L);
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.deleteUser(1L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Delete failed");
+        verify(userDao).existsById(1L);
+        verify(userDao).deleteUser(1L);
     }
 }

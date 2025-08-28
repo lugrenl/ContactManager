@@ -93,4 +93,16 @@ public class UserDao {
             return query.uniqueResultOptional();
         }
     }
+    
+    public Optional<User> findById(Long id) {
+        try (var session = sessionFactory.openSession()) {
+            return Optional.ofNullable(session.get(User.class, id));
+        }
+    }
+    
+    public boolean existsById(Long id) {
+        try (var session = sessionFactory.openSession()) {
+            return session.get(User.class, id) != null;
+        }
+    }
 }

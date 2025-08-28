@@ -40,7 +40,7 @@ public class ContactControllerIT {
                 .when()
                 .post("/api/auth/login")
                 .then()
-                .statusCode(200)
+                .statusCode(HttpStatus.OK.value())
                 .extract()
                 .path("jwt-token");
     }
