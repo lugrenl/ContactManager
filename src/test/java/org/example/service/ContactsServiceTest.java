@@ -11,11 +11,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -28,6 +35,9 @@ class ContactsServiceTest {
 
     @Mock
     private ContactReader contactReader;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private ContactService contactService;
@@ -52,6 +62,14 @@ class ContactsServiceTest {
         testContact.setEmail("john.doe@example.com");
         testContact.setPhoneNumber("+1234567890");
     }
+    
+    private void setupSecurityContext() {
+        Authentication authentication = new UsernamePasswordAuthenticationToken("testuser", "password");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
+    }
 
     @Test
     void getAllContacts_ReturnsAllContacts() {
@@ -65,17 +83,22 @@ class ContactsServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(1L);
     }
-
+    
     @Test
-    void saveAll_ProcessesFileSuccessfully() {
+    void saveAll_ProcessesFileSuccessfully() throws Exception {
         // Arrange
-        String filePath = "test.csv";
+        setupSecurityContext();
+        String filePath = Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource("test.csv")).toURI()).toString();
         when(contactReader.readFromFile(any())).thenReturn(List.of(testContact));
+        when(contactDao.addContact(any(Contact.class))).thenReturn(1L);
+        when(contactDao.findExistingContact(any(), any(), any(), any())).thenReturn(Optional.empty());
 
         // Act
-        contactService.saveAll(filePath);
+        List<ResponseContactDto> result = contactService.saveAll(filePath);
 
         // Assert
-        verify(contactDao).saveAll(anyList());
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(1L);
+        verify(contactDao).addContact(any(Contact.class));
     }
 }

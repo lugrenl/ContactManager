@@ -2,10 +2,7 @@ package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.dto.AppErrorResponse;
-import org.example.exceptions.ContactNotFoundException;
-import org.example.exceptions.IncorrectCredentialsException;
-import org.example.exceptions.TokenException;
-import org.example.exceptions.UserAlreadyExistsException;
+import org.example.exceptions.*;
 import org.example.dto.ValidationErrorResponse;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
@@ -44,6 +41,12 @@ public class GlobalExceptionHandler {
     private ResponseEntity<AppErrorResponse> handleContactNotFoundException(ContactNotFoundException e) {
         AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(FileNotFoundException.class)
+    public ResponseEntity<AppErrorResponse> handleFileNotFoundException(FileNotFoundException e) {
+        AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)

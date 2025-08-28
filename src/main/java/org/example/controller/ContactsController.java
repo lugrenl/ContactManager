@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/contacts")
-@Tag(name = "Contacts Admin", description = "Endpoints for managing contacts (Admin only)")
+@Tag(name = "Contacts Admin", description = "Endpoints for managing contacts")
 @SecurityRequirement(name = "bearerAuth")
 public class ContactsController {
     private final ContactService contactService;
@@ -63,10 +62,10 @@ public class ContactsController {
             ),
             @ApiResponse(
                 responseCode = "400",
-                description = "Invalid file path or file format"
+                description = "File not found or error reading file"
             ),
             @ApiResponse(
-                responseCode = "403",
+                responseCode = "401",
                 description = "Access denied - requires USER or ADMIN role"
             )
         }

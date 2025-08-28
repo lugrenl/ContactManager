@@ -214,22 +214,4 @@ class HibernateContactDaoTest {
         // Assert
         assertTrue(result.isEmpty());
     }
-
-    @Test
-    void testSaveAll() {
-        // Arrange
-        List<Contact> contacts = Arrays.asList(
-                new Contact(), new Contact(), new Contact()
-        );
-        Transaction transaction = mock(Transaction.class);
-        when(session.beginTransaction()).thenReturn(transaction);
-
-        // Act
-        contactDao.saveAll(contacts);
-
-        // Assert
-        verify(session).beginTransaction();
-        verify(session, times(3)).save(any(Contact.class));
-        verify(transaction).commit();
-    }
 }

@@ -84,7 +84,7 @@ public class ContactsControllerIT {
                 .when()
                 .get("/api/contacts/admin")
                 .then()
-                .statusCode(403);
+                .statusCode(401);
     }
 
     @Test
@@ -141,10 +141,11 @@ public class ContactsControllerIT {
     public void whenImportContactsWithoutFile_thenReturnBadRequest() {
         given()
                 .header("Authorization", "Bearer " + adminToken)
+                .param("filePath", "./test_none.csv")
                 .when()
                 .post("/api/contacts/import")
                 .then()
-                .statusCode(403); //TODO: should be 400
+                .statusCode(400);
     }
 
     @Test
@@ -153,6 +154,6 @@ public class ContactsControllerIT {
                 .when()
                 .get("/api/contacts/admin")
                 .then()
-                .statusCode(403); //TODO: should be 401
+                .statusCode(401);
     }
 }

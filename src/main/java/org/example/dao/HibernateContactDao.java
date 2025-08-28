@@ -10,7 +10,6 @@ import org.hibernate.SessionFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -79,15 +78,6 @@ public class HibernateContactDao implements ContactDao {
             } else {
                 throw new ContactNotFoundException("Contact not found with ID: " + contactId);
             }
-            transaction.commit();
-        }
-    }
-
-    @Override
-    public void saveAll(Collection<Contact> contacts) {
-        try(var session = sessionFactory.openSession()) {
-            var transaction = session.beginTransaction();
-            contacts.forEach(session::save);
             transaction.commit();
         }
     }

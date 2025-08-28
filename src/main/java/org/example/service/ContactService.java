@@ -2,6 +2,7 @@ package org.example.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.dao.ContactDao;
+import org.example.exceptions.FileNotFoundException;
 
 import org.example.dto.ResponseContactDto;
 import org.example.entity.Contact;
@@ -78,9 +79,20 @@ public class ContactService {
     }
 
     @Transactional
-    public void saveAll(String filePath) {
-        var contacts = contactReader.readFromFile(Paths.get(filePath));
-        contactDao.saveAll(contacts);
+    public List<ResponseContactDto> saveAll(String filePath) {
+        var path = Paths.get(filePath);
+        if (!path.toFile().exists()) {
+            throw new FileNotFoundException("File not found: " + filePath);
+        }
+
+        try {
+            var contacts = contactReader.readFromFile(path);
+            return contacts.stream()
+                    .map(this::addContactToCurrentUser)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new FileNotFoundException("Error reading file: " + filePath, e);
+        }
     }
 
     @Transactional
