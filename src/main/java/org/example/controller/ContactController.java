@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.dto.AppErrorResponse;
 import org.example.dto.RequestContactDto;
 import org.example.dto.ResponseContactDto;
 import org.example.entity.Contact;
@@ -68,7 +69,8 @@ public class ContactController {
             @ApiResponse(responseCode = "200", description = "Contact found",
                     content = @Content(schema = @Schema(implementation = ResponseContactDto.class))),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "Contact not found")
+            @ApiResponse(responseCode = "404", description = "Contact not found",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @GetMapping(value = "/{contactId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
@@ -94,7 +96,8 @@ public class ContactController {
                     content = @Content(schema = @Schema(implementation = ResponseContactDto.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "Contact not found")
+            @ApiResponse(responseCode = "404", description = "Contact not found",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @PutMapping(value = "/{contactId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
@@ -124,7 +127,8 @@ public class ContactController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Contact deleted successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "404", description = "Contact not found")
+            @ApiResponse(responseCode = "404", description = "Contact not found",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @DeleteMapping("/{contactId}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
@@ -132,6 +136,6 @@ public class ContactController {
             @io.swagger.v3.oas.annotations.Parameter(description = "ID of the contact to delete", required = true)
             @PathVariable("contactId") long contactId) {
         contactService.deleteContactFromCurrentUser(contactId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

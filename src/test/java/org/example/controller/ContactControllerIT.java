@@ -185,7 +185,7 @@ public class ContactControllerIT {
                 .when()
                 .delete("/api/contacts/" + contactId)
                 .then()
-                .statusCode(HttpStatus.NO_CONTENT.value());
+                .statusCode(HttpStatus.OK.value());
 
         // Verify the contact is deleted
         given()
