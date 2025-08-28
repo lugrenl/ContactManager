@@ -11,6 +11,39 @@ RESTful веб-сервис для управления контактами, р
 - Maven/Gradle (в зависимости от конфигурации проекта)
 - Lombok
 - Spring Validation
+- Springdoc OpenAPI (Swagger UI)
+
+## Документация API (Swagger/OpenAPI)
+
+API документация доступна через Swagger UI после запуска приложения:
+- **Swagger UI:** http://localhost:8080/swagger-ui.html
+- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
+
+### Основные эндпоинты API
+
+#### Аутентификация
+- `/api/auth/register` - Регистрация нового пользователя
+- `/api/auth/login` - Вход в систему
+- `/api/auth/logout` - Выход из системы
+
+#### Контакты
+- `GET /api/contacts` - Получить все контакты
+- `GET /api/contacts/{id}` - Получить контакт по ID
+- `POST /api/contacts` - Создать новый контакт
+- `PUT /api/contacts/{id}` - Обновить существующий контакт
+- `DELETE /api/contacts/{id}` - Удалить контакт
+
+#### Пользователи (только для администраторов)
+- `GET /api/users` - Получить всех пользователей
+- `GET /api/users/{id}` - Получить пользователя по ID
+- `PUT /api/users/{id}` - Обновить данные пользователя
+- `DELETE /api/users/{id}` - Удалить пользователя
+
+### Авторизация
+Для доступа к защищенным эндпоинтам необходимо добавить JWT токен в заголовок запроса:
+```
+Authorization: Bearer ваш_jwt_токен
+```
 
 ## Требования
 - Java 17 или выше
@@ -73,6 +106,7 @@ RESTful веб-сервис для управления контактами, р
 - `200 OK` - успешный запрос
 - `201 Created` - ресурс успешно создан
 - `400 Bad Request` - неверные входные данные
+- `401 Unauthorized` - не авторизован
 - `403 Forbidden` - доступ запрещен
 - `404 Not Found` - ресурс не найден
 - `500 Internal Server Error` - внутренняя ошибка сервера
