@@ -7,10 +7,10 @@ RESTful веб-сервис для управления контактами, р
 - Java 17
 - Spring Boot 3.x
 - Spring Data JPA
+- Spring Security
 - PostgreSQL
 - Maven/Gradle (в зависимости от конфигурации проекта)
 - Lombok
-- Spring Validation
 - Springdoc OpenAPI (Swagger UI)
 
 ## Документация API (Swagger/OpenAPI)
