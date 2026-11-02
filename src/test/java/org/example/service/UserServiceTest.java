@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.dao.UserDao;
 import org.example.dto.ResponseUserDto;
 import org.example.entity.User;
+import org.example.exceptions.UserAlreadyExistsException;
 import org.example.exceptions.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -95,6 +96,7 @@ class UserServiceTest {
         updatedUser.setPassword("newpassword");
         updatedUser.setEmail("updated@example.com");
 
+        when(userDao.findByUsername("updateduser")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("newpassword")).thenReturn("encodedpassword");
         when(userDao.updateUser(1L, updatedUser)).thenAnswer(invocation -> {
             User user = invocation.getArgument(1);
@@ -121,6 +123,7 @@ class UserServiceTest {
         updatedUser.setEmail("updated@example.com");
         // password is null
 
+        when(userDao.findByUsername("updateduser")).thenReturn(Optional.empty());
         when(userDao.updateUser(1L, updatedUser)).thenAnswer(invocation -> {
             User user = invocation.getArgument(1);
             user.setId(1);
@@ -215,5 +218,53 @@ class UserServiceTest {
                 .hasMessage("Delete failed");
         verify(userDao).existsById(1L);
         verify(userDao).deleteUser(1L);
+    }
+
+    @Test
+    void updateUser_WithNameOfAnotherUser_ThrowsUserAlreadyExists() {
+        User updatedUser = new User();
+        updatedUser.setName("occupied");
+        updatedUser.setEmail("updated@example.com");
+        updatedUser.setPassword("newpassword");
+
+        User existingUser = new User();
+        existingUser.setId(2);
+        existingUser.setName("occupied");
+
+        when(userDao.findByUsername("occupied")).thenReturn(Optional.of(existingUser));
+
+        assertThatThrownBy(() -> userService.updateUser(1L, updatedUser))
+                .isInstanceOf(UserAlreadyExistsException.class)
+                .hasMessageContaining("already exists");
+        verify(passwordEncoder, never()).encode(any());
+        verify(userDao, never()).updateUser(anyLong(), any(User.class));
+    }
+
+    @Test
+    void updateUser_WithOwnCurrentName_AllowsUpdate() {
+        User updatedUser = new User();
+        updatedUser.setName("testuser");
+        updatedUser.setEmail("updated@example.com");
+
+        when(userDao.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userDao.updateUser(1L, updatedUser)).thenReturn(testUser);
+
+        ResponseUserDto result = userService.updateUser(1L, updatedUser);
+
+        assertThat(result).isNotNull();
+        verify(userDao).updateUser(1L, updatedUser);
+    }
+
+    @Test
+    void updateUser_WithUnsupportedRole_ThrowsIllegalArgumentException() {
+        User updatedUser = new User();
+        updatedUser.setName("testuser");
+        updatedUser.setEmail("updated@example.com");
+        updatedUser.setRole("ROLE_SUPERUSER");
+
+        assertThatThrownBy(() -> userService.updateUser(1L, updatedUser))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unsupported role");
+        verify(userDao, never()).updateUser(anyLong(), any(User.class));
     }
 }

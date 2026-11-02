@@ -2,10 +2,12 @@ package org.example.dao;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.exceptions.UserAlreadyExistsException;
 import org.example.exceptions.UserNotFoundException;
 import org.example.entity.User;
 import org.hibernate.HibernateException;
 import org.hibernate.SessionFactory;
+import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.query.Query;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.stereotype.Component;
@@ -20,13 +22,13 @@ public class UserDao {
     private final SessionFactory sessionFactory;
 
     public List<User> getAllUsers() {
-        try (var session = sessionFactory.openSession()) {
-            return session.createQuery("from User", User.class).getResultList();
-        }
+        var session = sessionFactory.getCurrentSession();
+        return session.createQuery("from User", User.class).getResultList();
     }
 
     public User getUser(Long userId) {
-        try (var session = sessionFactory.openSession()) {
+        try {
+            var session = sessionFactory.getCurrentSession();
             User user = session.get(User.class, userId);
             if (user == null) {
                 throw new UserNotFoundException("User not found with ID: " + userId);
@@ -39,70 +41,62 @@ public class UserDao {
     }
 
     public void addUser(User user) {
-        try (var session = sessionFactory.openSession()) {
-            var transaction = session.beginTransaction();
+        try {
+            var session = sessionFactory.getCurrentSession();
             session.save(user);
-            transaction.commit();
+            session.flush();
+        } catch (ConstraintViolationException e) {
+            throw new UserAlreadyExistsException("User with this username already exists");
         }
     }
 
     public User updateUser(long userId, User user) {
-        try (var session = sessionFactory.openSession()) {
-            var transaction = session.beginTransaction();
+        try {
+            var session = sessionFactory.getCurrentSession();
             User userToUpdate = session.get(User.class, userId);
 
-            if (userToUpdate != null) {
-                userToUpdate.setName(user.getName());
-                userToUpdate.setPassword(user.getPassword());
-                userToUpdate.setEmail(user.getEmail());
-                
-                // Обновляем
-                if (user.getContacts() != null) {
-                    // Очищаем список контактов, чтобы избежать дублирования
-                    userToUpdate.getContacts().clear();
-                    // Добавляем новые контакты в список контактов пользователя
-                    userToUpdate.getContacts().addAll(user.getContacts());
-                }
-                
-                session.merge(userToUpdate);
-            } else {
+            if (userToUpdate == null) {
                 throw new UserNotFoundException("User not found with ID: " + userId);
             }
-            transaction.commit();
+
+            userToUpdate.setName(user.getName());
+            userToUpdate.setEmail(user.getEmail());
+            if (user.getPassword() != null) {
+                userToUpdate.setPassword(user.getPassword());
+            }
+            if (user.getRole() != null) {
+                userToUpdate.setRole(user.getRole());
+            }
+            session.flush();
             return userToUpdate;
+        } catch (ConstraintViolationException e) {
+            throw new UserAlreadyExistsException("User with this username already exists");
         }
     }
 
     public void deleteUser(long userId) {
-        try (var session = sessionFactory.openSession()) {
-            var transaction = session.beginTransaction();
-            User user = session.get(User.class, userId);
-            if (user != null) {
-                session.remove(user);
-            } else {
-                throw new UserNotFoundException("User not found with ID: " + userId);
-            }
-            transaction.commit();
+        var session = sessionFactory.getCurrentSession();
+        User user = session.get(User.class, userId);
+        if (user == null) {
+            throw new UserNotFoundException("User not found with ID: " + userId);
         }
+        session.remove(user);
     }
 
     public Optional<User> findByUsername(String username) {
-        try (var session = sessionFactory.openSession()) {
-            Query<User> query = session.createQuery("FROM User WHERE name = :username", User.class);
-            query.setParameter("username", username);
-            return query.uniqueResultOptional();
-        }
+        var session = sessionFactory.getCurrentSession();
+        Query<User> query = session.createQuery("FROM User WHERE name = :username", User.class);
+        query.setParameter("username", username);
+        return query.uniqueResultOptional();
     }
-    
+
     public Optional<User> findById(Long id) {
-        try (var session = sessionFactory.openSession()) {
-            return Optional.ofNullable(session.get(User.class, id));
-        }
+        var session = sessionFactory.getCurrentSession();
+        return Optional.ofNullable(session.get(User.class, id));
     }
-    
+
     public boolean existsById(Long id) {
-        try (var session = sessionFactory.openSession()) {
-            return session.get(User.class, id) != null;
-        }
+        var session = sessionFactory.getCurrentSession();
+        return session.get(User.class, id) != null;
     }
 }

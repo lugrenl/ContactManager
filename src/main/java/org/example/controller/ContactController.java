@@ -40,7 +40,8 @@ public class ContactController {
             @ApiResponse(responseCode = "201", description = "Contact created successfully",
                     content = @Content(schema = @Schema(implementation = ResponseContactDto.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
@@ -68,7 +69,10 @@ public class ContactController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Contact found",
                     content = @Content(schema = @Schema(implementation = ResponseContactDto.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Contact belongs to another user",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Contact not found",
                     content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
@@ -82,20 +86,30 @@ public class ContactController {
     }
 
     @Operation(summary = "Get all contacts", description = "Retrieves all contacts for the current user")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved contacts",
-            content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResponseContactDto.class))))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved contacts",
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = ResponseContactDto.class)))),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
+    })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public Set<ResponseContactDto> getAllContactsForCurrentUser() {
         return contactService.getContactsForCurrentUser();
     }
 
-    @Operation(summary = "Update contact", description = "Updates an existing contact")
+    @Operation(summary = "Update contact", description = "Updates an existing contact in place and preserves its ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Contact updated successfully",
+            @ApiResponse(responseCode = "200", description = "Contact updated successfully; the contact ID is preserved",
                     content = @Content(schema = @Schema(implementation = ResponseContactDto.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Contact belongs to another user",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Another contact of the same user already has these data",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Contact not found",
                     content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
@@ -125,8 +139,11 @@ public class ContactController {
 
     @Operation(summary = "Delete contact", description = "Deletes a contact by ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Contact deleted successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "200", description = "Contact deleted successfully (empty body)"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Contact belongs to another user",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Contact not found",
                     content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })

@@ -1,10 +1,10 @@
 package org.example.dao;
 
+import org.example.entity.Contact;
 import org.example.entity.User;
 import org.example.exceptions.UserNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,29 +39,34 @@ class HibernateUserDaoTest {
     private UserDao userDao;
 
     private User testUser;
+    private Contact existingContact;
 
     @BeforeEach
     void setUp() {
-        when(sessionFactory.openSession()).thenReturn(session);
-        
+        when(sessionFactory.getCurrentSession()).thenReturn(session);
+
+        existingContact = new Contact();
+        existingContact.setId(10L);
+        existingContact.setName("Existing");
+        existingContact.setSurname("Contact");
+
         testUser = new User();
         testUser.setId(1);
         testUser.setName("testuser");
         testUser.setPassword("password");
         testUser.setEmail("test@example.com");
+        testUser.setRole("ROLE_USER");
+        testUser.addContact(existingContact);
     }
 
     @Test
     void testGetAllUsers() {
-        // Arrange
         List<User> expectedUsers = Arrays.asList(testUser, new User(), new User());
         when(session.createQuery(anyString(), eq(User.class))).thenReturn(query);
         when(query.getResultList()).thenReturn(expectedUsers);
 
-        // Act
         List<User> result = userDao.getAllUsers();
 
-        // Assert
         assertNotNull(result);
         assertEquals(3, result.size());
         verify(session).createQuery("from User", User.class);
@@ -68,13 +74,10 @@ class HibernateUserDaoTest {
 
     @Test
     void testGetUser_UserExists() {
-        // Arrange
         when(session.get(User.class, 1L)).thenReturn(testUser);
 
-        // Act
         User result = userDao.getUser(1L);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("testuser", result.getName());
@@ -82,95 +85,83 @@ class HibernateUserDaoTest {
 
     @Test
     void testGetUser_UserNotExists() {
-        // Arrange
         when(session.get(User.class, 999L)).thenReturn(null);
 
-        // Act & Assert
         assertThrows(UserNotFoundException.class, () -> userDao.getUser(999L));
     }
 
     @Test
     void testAddUser() {
-        // Arrange
-        Transaction transaction = mock(Transaction.class);
-        when(session.beginTransaction()).thenReturn(transaction);
         when(session.save(any(User.class))).thenReturn(1L);
 
-        // Act
         userDao.addUser(testUser);
 
-        // Assert
-        verify(session).beginTransaction();
         verify(session).save(any(User.class));
-        verify(transaction).commit();
+        verify(session).flush();
     }
 
     @Test
-    void testUpdateUser() {
-        // Arrange
+    void testUpdateUser_PreservesContactsAndUpdatesRole() {
         User updatedUser = new User();
         updatedUser.setName("updateduser");
         updatedUser.setPassword("newpassword");
         updatedUser.setEmail("updated@example.com");
+        updatedUser.setRole("ROLE_ADMIN");
 
-        Transaction transaction = mock(Transaction.class);
-        when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(User.class, 1L)).thenReturn(testUser);
-        when(session.merge(any(User.class))).thenReturn(testUser);
 
-        // Act
         User result = userDao.updateUser(1L, updatedUser);
 
-        // Assert
         assertNotNull(result);
         assertEquals("updateduser", result.getName());
         assertEquals("newpassword", result.getPassword());
         assertEquals("updated@example.com", result.getEmail());
-        verify(session).beginTransaction();
+        assertEquals("ROLE_ADMIN", result.getRole());
+        assertEquals(Set.of(existingContact), result.getContacts());
         verify(session).get(User.class, 1L);
-        verify(transaction).commit();
+        verify(session).flush();
+    }
+
+    @Test
+    void testUpdateUser_WithoutPassword_KeepsExistingPassword() {
+        User updatedUser = new User();
+        updatedUser.setName("updateduser");
+        updatedUser.setEmail("updated@example.com");
+
+        when(session.get(User.class, 1L)).thenReturn(testUser);
+
+        User result = userDao.updateUser(1L, updatedUser);
+
+        assertEquals("password", result.getPassword());
+        assertEquals("ROLE_USER", result.getRole());
     }
 
     @Test
     void testDeleteUser_UserExists() {
-        // Arrange
-        Transaction transaction = mock(Transaction.class);
-        when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(User.class, 1L)).thenReturn(testUser);
 
-        // Act
         userDao.deleteUser(1L);
 
-        // Assert
-        verify(session).beginTransaction();
         verify(session).get(User.class, 1L);
         verify(session).remove(testUser);
-        verify(transaction).commit();
     }
 
     @Test
     void testDeleteUser_UserNotExists() {
-        // Arrange
         when(session.get(User.class, 999L)).thenReturn(null);
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
 
-        // Act & Assert
         assertThrows(UserNotFoundException.class, () -> userDao.deleteUser(999L));
         verify(session, never()).remove(any(User.class));
-        verify(session.getTransaction(), never()).commit();
     }
 
     @Test
     void testFindByUsername_UserExists() {
-        // Arrange
         when(session.createQuery(anyString(), eq(User.class))).thenReturn(query);
         when(query.setParameter(anyString(), any())).thenReturn(query);
         when(query.uniqueResultOptional()).thenReturn(Optional.of(testUser));
 
-        // Act
         Optional<User> result = userDao.findByUsername("testuser");
 
-        // Assert
         assertTrue(result.isPresent());
         assertEquals("testuser", result.get().getName());
         verify(query).setParameter("username", "testuser");
@@ -178,15 +169,12 @@ class HibernateUserDaoTest {
 
     @Test
     void testFindByUsername_UserNotExists() {
-        // Arrange
         when(session.createQuery(anyString(), eq(User.class))).thenReturn(query);
         when(query.setParameter(anyString(), any())).thenReturn(query);
         when(query.uniqueResultOptional()).thenReturn(Optional.empty());
 
-        // Act
         Optional<User> result = userDao.findByUsername("nonexistent");
 
-        // Assert
         assertTrue(result.isEmpty());
     }
 }

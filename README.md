@@ -1,440 +1,280 @@
 # Contact Manager API
 
-## Описание проекта
-RESTful веб-сервис для управления контактами, разработанный на Spring Boot. Позволяет создавать, читать, обновлять и удалять контакты через HTTP-запросы.
+REST-бэкенд для управления личными контактами с регистрацией пользователей, JWT-аутентификацией, административным API и импортом контактов из CSV. Пользовательский веб-интерфейс в проект не входит; для ручной проверки API предназначен Swagger UI.
+
+## Возможности
+
+- регистрация пользователей и вход с выдачей JWT;
+- logout с серверным отзывом конкретного JWT;
+- CRUD личных контактов текущего пользователя;
+- дедупликация контактов только внутри адресной книги владельца;
+- импорт контактов из CSV-файла на сервере;
+- административный просмотр всех контактов;
+- административное управление пользователями и ролями.
 
 ## Технологии
-- Java 17
-- Spring Boot 3.x
-- Spring Data JPA
-- Spring Security
-- PostgreSQL
-- Maven/Gradle (в зависимости от конфигурации проекта)
-- Lombok
-- Springdoc OpenAPI (Swagger UI)
 
-## Документация API (Swagger/OpenAPI)
+- Java 17+ (проект проверялся на OpenJDK 21; Java toolchain в сборке не закреплён);
+- Gradle Wrapper 8.13, плагин `java`;
+- Spring Boot 3.5.x (Web, Security, Validation, Test);
+- Hibernate ORM 6.6 и Spring ORM;
+- PostgreSQL;
+- Auth0 Java JWT;
+- springdoc-openapi 2.8.9 (Swagger UI);
+- Apache Commons CSV;
+- Lombok, ModelMapper.
 
-API документация доступна через Swagger UI после запуска приложения:
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
-- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
-
-### Основные эндпоинты API
-
-#### Аутентификация
-- `/api/auth/register` - Регистрация нового пользователя
-- `/api/auth/login` - Вход в систему
-- `/api/auth/logout` - Выход из системы
-
-#### Контакты
-- `GET /api/contacts` - Получить все контакты
-- `GET /api/contacts/{id}` - Получить контакт по ID
-- `POST /api/contacts` - Создать новый контакт
-- `PUT /api/contacts/{id}` - Обновить существующий контакт
-- `DELETE /api/contacts/{id}` - Удалить контакт
-
-#### Пользователи (только для администраторов)
-- `GET /api/users` - Получить всех пользователей
-- `GET /api/users/{id}` - Получить пользователя по ID
-- `PUT /api/users/{id}` - Обновить данные пользователя
-- `DELETE /api/users/{id}` - Удалить пользователя
-
-### Авторизация
-Для доступа к защищенным эндпоинтам необходимо добавить JWT токен в заголовок запроса:
-```
-Authorization: Bearer ваш_jwt_токен
-```
+Доступ к данным реализован через собственный `SessionFactory`, DAO и `HibernateTransactionManager`. Spring Data-репозитории не используются.
 
 ## Требования
-- Java 17 или выше
-- Maven 3.6+ или Gradle 7.x+
 
-## Установка и запуск
+- JDK 17 или новее (рекомендуется 21);
+- PostgreSQL 14+ (или совместимая версия);
+- сетевой доступ к Maven Central при первой сборке.
 
-1. Клонируйте репозиторий:
-   ```bash
-   git clone https://github.com/yourusername/contact-manager.git
-   cd contact-manager
-   ```
+## Сборка и проверки
 
-2. Соберите проект:
-   ```bash
-   # Для Maven
-   ./mvnw clean install
-   
-   # Или для Gradle
-   ./gradlew build
-   ```
+Используется Gradle Wrapper из репозитория. Команды для Windows PowerShell:
 
-3. Запустите приложение:
-   ```bash
-   # Для Maven
-   ./mvnw spring-boot:run
-   
-   # Или для Gradle
-   ./gradlew bootRun
-   ```
+```powershell
+.\gradlew.bat classes
+.\gradlew.bat compileJava --console=plain
+.\gradlew.bat build --console=plain
+```
 
-Приложение будет доступно по адресу: `http://localhost:8080`
+На Unix/macOS замените `.\gradlew.bat` на `./gradlew`.
 
-## Модель данных
+Безопасные модульные тесты (без подключения к PostgreSQL):
 
-### Контакт
+```powershell
+.\gradlew.bat test --tests 'org.example.service.*Test' --tests 'org.example.dao.*Test' --tests 'org.example.util.*Test' --tests 'org.example.config.*Test'
+```
+
+Интеграционные тесты используют изолированную H2:
+
+```powershell
+.\gradlew.bat test --tests 'org.example.controller.*IT'
+```
+
+Полная сборка `build` включает все тесты. Отдельной задачи `bootRun` или исполняемого Spring Boot JAR в проекте нет: приложение запускается через главный класс `org.example.ContactManagerMain` из IDE или с runtime classpath.
+
+## Запуск
+
+1. Подготовьте PostgreSQL и схему базы данных (см. раздел «База данных и миграции»).
+2. Задайте параметры подключения и обязательные секреты (см. «Конфигурация»).
+3. Запустите `org.example.ContactManagerMain`.
+4. Приложение слушает `http://localhost:8080`.
+
+При старте Hibernate работает с `hibernate.hbm2ddl.auto=validate`: рабочая схема не создаётся и не пересоздаётся автоматически.
+
+## Конфигурация
+
+Параметры подключения к БД находятся в `src/main/resources/jdbc.properties`:
+
+| Параметр | Назначение |
+|---|---|
+| `spring.datasource.url` | JDBC URL PostgreSQL |
+| `spring.datasource.username` | Пользователь БД |
+| `spring.datasource.password` | Пароль БД |
+| `spring.datasource.driver-class-name` | `org.postgresql.Driver` |
+| `spring.jpa.database-platform` | `org.hibernate.dialect.PostgreSQLDialect` |
+
+Не используйте значения из репозитория как production-учётные данные: задайте собственные.
+
+JWT и начальный администратор настраиваются в `application.properties` через переменные окружения или одноимённые свойства:
+
+| Переменная окружения | Свойство | Обязательность | Назначение |
+|---|---|---|---|
+| `JWT_SECRET` | `jwt_secret` | Да для обычного запуска | Секрет подписи HMAC. Минимум 32 символа. Отсутствие, короткое значение или известное `SECRET` приводят к остановке с диагностикой. |
+| — | `jwt_expiration` | Нет, по умолчанию 60 | Срок действия JWT **в минутах**. |
+| `ADMIN_USERNAME` | `admin.username` | Только для создания начального администратора | Имя администратора. |
+| `ADMIN_PASSWORD` | `admin.password` | Только для создания начального администратора | Пароль администратора; хешируется BCrypt перед сохранением. |
+| `ADMIN_EMAIL` | `admin.email` | Нет | Email администратора, по умолчанию `admin@example.com`. |
+
+Начальный администратор создаётся только при явно заданных `ADMIN_USERNAME` и `ADMIN_PASSWORD`. Если не задан ни один из них, приложение запускается без автоматического создания администратора. Если задан только один параметр, запуск завершается с ошибкой. Существующий администратор не изменяется.
+
+Пример (значения замените собственными, секрет не коммитьте):
+
+```powershell
+$env:JWT_SECRET = "<случайная строка не короче 32 символов>"
+$env:ADMIN_USERNAME = "<имя администратора>"
+$env:ADMIN_PASSWORD = "<надёжный пароль>"
+.\gradlew.bat build --console=plain
+```
+
+## База данных и миграции
+
+- Приложение не создаёт и не пересоздаёт рабочую схему: используется `validate`.
+- Схема должна соответствовать Hibernate mappings (`User`, `Contact`, `RevokedToken`). Контакты персональные: `User 1—N Contact` через `contacts.user_id`; таблицы `user_contacts` в текущей модели нет.
+- Механизма автоматического применения миграций (Flyway/Liquibase) нет. SQL-файлы в `src/main/resources/db/migration` выполняются вручную владельцем БД.
+- `Basic_schema.sql` — исторический файл начальной схемы; он не применяется автоматически, описывает старую схему с `user_contacts` и не должен использоваться как готовая production-миграция без проверки.
+- `Add_unique_users_name.sql` добавляет уникальное ограничение на имя пользователя. Перед применением проверьте дубликаты:
+
+```sql
+SELECT name, COUNT(*) FROM users GROUP BY name HAVING COUNT(*) > 1;
+```
+
+- `Add_revoked_tokens.sql` создаёт таблицу `revoked_tokens`, используемую для серверного отзыва JWT. Её необходимо применить до запуска версии с отзывом токенов.
+- `Diagnose_contacts_migration.sql` — read-only диагностика существующей many-to-many схемы: orphan-контакты, общие контакты, потенциальные дубликаты после расширения и фактические типы ID.
+- `Migrate_contacts_to_personal_owner.sql` — ручная миграция many-to-many → one-to-many. Она сохраняет исходный ID за одним владельцем (минимальный `user_id`), создаёт отдельную копию с новым ID каждому остальному пользователю, добавляет `contacts.user_id NOT NULL`, FK и индексы, затем удаляет `user_contacts`. Миграция останавливается до разрушительных изменений при orphan-контактах, NULL в обязательных полях или дубликатах в адресной книге одного пользователя. Старая таблица сохраняется как `contacts_legacy_backup`; полный откат требует резервной копии БД.
+- Порядок для существующей PostgreSQL: остановить старую версию, выполнить диагностику, сделать резервную копию, применить миграцию, затем запустить версию с новой моделью. Миграция не применяется при старте приложения.
+
+## API
+
+Базовый URL: `http://localhost:8080`
+
+Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+Публичные операции: регистрация и вход. Остальные операции требуют JWT в заголовке:
+
+```
+Authorization: Bearer <jwt-token>
+```
+
+### Аутентификация
+
+| Метод | URL | Доступ | Успешный ответ |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Публичный | `200 {"jwt-token":"..."}` |
+| `POST` | `/api/auth/login` | Публичный | `200 {"jwt-token":"..."}` |
+| `POST` | `/api/auth/logout` | JWT | `200`, `text/plain`: `Logged out successfully` |
+
+Регистрация:
+
 ```json
 {
-    "id": 1,
-    "firstName": "Иван",
-    "lastName": "Петров",
-    "phone": "+79161234567",
-    "email": "ivan@example.com"
+  "name": "johndoe",
+  "password": "securePassword123",
+  "email": "john.doe@example.com"
 }
 ```
 
-### Поля
-- **id** - уникальный идентификатор (генерируется автоматически)
-- **firstName** - имя (обязательное, не может быть пустым)
-- **lastName** - фамилия (обязательное, не может быть пустой)
-- **phone** - телефонный номер (обязательное, валидация формата)
-- **email** - электронная почта (опциональное, с валидацией формата)
+Вход:
 
-## Документация API
-
-### Базовый URL
-Все эндпоинты доступны по базовому URL: `http://localhost:8080/api/`
-
-### Коды ответов
-- `200 OK` - успешный запрос
-- `201 Created` - ресурс успешно создан
-- `400 Bad Request` - неверные входные данные
-- `401 Unauthorized` - не авторизован
-- `403 Forbidden` - доступ запрещен
-- `404 Not Found` - ресурс не найден
-- `500 Internal Server Error` - внутренняя ошибка сервера
-
-## Эндпоинты API
-
-### Управление пользователями (только для администраторов)
-
-#### Получить всех пользователей
-```
-GET /api/users
-```
-
-**Требуемая роль:** `ROLE_ADMIN`
-
-**Ответ:**
-```json
-[
-    {
-        "id": 1,
-        "username": "admin",
-        "email": "admin@example.com",
-        "roles": "ROLE_ADMIN"
-    },
-    {
-        "id": 2,
-        "username": "user1",
-        "email": "user1@example.com",
-        "roles": "ROLE_USER"
-    }
-]
-```
-
-#### Получить пользователя по ID
-```
-GET /api/users/{userId}
-```
-
-**Параметры пути:**
-- `userId` - ID пользователя
-
-**Требуемая роль:** `ROLE_ADMIN`
-
-**Пример запроса:**
-```
-GET /api/users/1
-```
-
-**Ответ:**
 ```json
 {
-    "id": 1,
-    "username": "admin",
-    "email": "admin@example.com",
-    "roles": "ROLE_ADMIN"
+  "name": "johndoe",
+  "password": "securePassword123"
 }
 ```
 
-#### Обновить пользователя
-```
-PUT /api/users/{userId}
-```
+После logout предъявленный токен отзывается и больше не даёт доступа; остальные токены пользователя продолжают работать.
 
-**Параметры пути:**
-- `userId` - ID пользователя для обновления
+### Контакты текущего пользователя
 
-**Требуемая роль:** `ROLE_ADMIN`
+| Метод | URL | Доступ | Успешный ответ |
+|---|---|---|---|
+| `POST` | `/api/contacts` | USER/ADMIN | `201`, DTO контакта |
+| `GET` | `/api/contacts` | USER/ADMIN | `200`, массив личных контактов |
+| `GET` | `/api/contacts/{contactId}` | USER/ADMIN + владение | `200`, DTO контакта |
+| `PUT` | `/api/contacts/{contactId}` | USER/ADMIN + владение | `200`, DTO **с прежним ID** |
+| `DELETE` | `/api/contacts/{contactId}` | USER/ADMIN + владение | `200`, пустое тело |
 
-**Тело запроса:**
+Тело создания/изменения контакта:
+
 ```json
 {
-    "username": "updatedUser",
-    "email": "updated@example.com",
-    "password": "newPassword123"
+  "name": "John",
+  "surname": "Doe",
+  "email": "john.doe@example.com",
+  "phoneNumber": "+1234567890"
 }
 ```
 
-**Ответ:**
+Ответ:
+
 ```json
 {
-    "id": 1,
-    "username": "updatedUser",
-    "email": "updated@example.com",
-    "roles": "ROLE_USER"
+  "id": 1,
+  "name": "John",
+  "surname": "Doe",
+  "email": "john.doe@example.com",
+  "phoneNumber": "+1234567890"
 }
 ```
 
-#### Удалить пользователя
-```
-DELETE /api/users/{userId}
-```
+`email` и `phoneNumber` необязательны. Контакты персональные: создание и импорт дедуплицируют данные только в адресной книге текущего пользователя. Изменение обновляет существующую запись и сохраняет её `id`. Если новые данные совпадают с другим контактом того же пользователя, возвращается `409`; запись не создаётся и не сливается. Удаление удаляет личный контакт; при удалении пользователя его контакты удаляются вместе с ним.
 
-**Параметры пути:**
-- `userId` - ID пользователя для удаления
+### Административные операции
 
-**Требуемая роль:** `ROLE_ADMIN`
+| Метод | URL | Доступ | Успешный ответ |
+|---|---|---|---|
+| `GET` | `/api/contacts/admin` | ADMIN | `200`, массив всех контактов с `ownerId` |
+| `POST` | `/api/contacts/import` (`multipart/form-data`, part `file`) | USER/ADMIN | `200`, пустое тело |
+| `GET` | `/api/users` | ADMIN | `200`, массив пользователей |
+| `GET` | `/api/users/{userId}` | ADMIN | `200`, DTO пользователя |
+| `PUT` | `/api/users/{userId}` | ADMIN | `200`, DTO пользователя |
+| `DELETE` | `/api/users/{userId}` | ADMIN | `204` |
 
-**Пример запроса:**
-```
-DELETE /api/users/2
-```
+DTO пользователя:
 
-**Успешный ответ:**
-```
-204 No Content
-```
-
-### Управление контактами
-
-#### Получить все контакты
-```
-GET /api/contacts
-```
-**Ответ:**
-```
-[
-    {
-        "id": 1,
-        "firstName": "Иван",
-        "lastName": "Петров",
-        "phone": "+79161234567",
-        "email": "ivan@example.com"
-    },
-    {
-        "id": 2,
-        "firstName": "Мария",
-        "lastName": "Иванова",
-        "phone": "+79167654321",
-        "email": "maria@example.com"
-    }
-]
-```
-
-### Получить конкретный контакт
-```
-GET /contacts/{id}
-```
-
-**Пример запроса:**
-```
-GET /contacts/1
-```
-
-**Ответ:**
 ```json
 {
-    "id": 1,
-    "firstName": "Иван",
-    "lastName": "Петров",
-    "phone": "+79161234567",
-    "email": "ivan@example.com"
+  "id": 1,
+  "name": "johndoe",
+  "email": "john.doe@example.com",
+  "role": "ROLE_USER",
+  "contactIds": [1, 2]
 }
 ```
 
-### Создать новый контакт
-```
-POST /contacts
-```
+Тело обновления пользователя: `name`, `password`, `email` обязательны; `role` необязателен, допустимы `ROLE_USER` и `ROLE_ADMIN`, при отсутствии роль не меняется. Пароль сохраняется только в виде BCrypt-хеша.
 
-**Пример запроса:**
+Импорт CSV принимает файл в `multipart/form-data` в части `file`; серверные пути не читаются. Ограничения: 1 MB на файл и 2 MB на запрос (превышение — `413`). Формат строки: `name,surname,email,phoneNumber` без заголовка; поддерживаются кавычки, запятые внутри кавычек и экранированные кавычки. Пустой или некорректный файл приводит к `400` без частичного импорта.
+
+Административный список контактов использует `AdminContactDto`: поля контакта плюс `ownerId`. Одинаковые сведения разных пользователей — это разные записи с разными `id`; `ownerId` позволяет их различить.
+
+## Ошибки
+
+Прикладные ошибки возвращаются в формате:
+
 ```json
 {
-    "firstName": "Алексей",
-    "lastName": "Смирнов",
-    "phone": "+79165554433",
-    "email": "alex@example.com"
+  "message": "User not found",
+  "timestamp": 1700000000000
 }
 ```
 
-**Ответ:**
-```json
-{
-    "id": 3,
-    "firstName": "Алексей",
-    "lastName": "Смирнов",
-    "phone": "+79165554433",
-    "email": "alex@example.com"
-}
+- `400` — неверные входные данные, ошибка CSV или отсутствующий файл;
+- `401` — отсутствующий/недействительный/отозванный JWT либо недостаточная роль;
+- `403` — попытка обратиться к контакту другого пользователя;
+- `404` — пользователь или контакт не найден;
+- `409` — занятое имя пользователя или конфликт контактных данных в адресной книге.
+
+Ошибки Bean Validation возвращают `ValidationErrorResponse` (`message`, `timestamp`, `details`); часть ошибок привязки параметров возвращается в формате `ProblemDetail`.
+
+## Тесты и изоляция БД
+
+Интеграционные тесты работают только с изолированной H2 in-memory БД. Это защищено `TestDatabaseGuard` и проверками в `HibernateConfig`: при активном профиле `test` приложение отказывается стартовать с не-H2 подключением. Не изменяйте тестовые настройки так, чтобы они указывали на рабочую PostgreSQL: тесты создают и удаляют схему.
+
+Production-приложение и реальная PostgreSQL в рамках проверок не запускались.
+
+## Структура проекта
+
+```text
+src/main/java/org/example/
+├── config/      Spring Security, JWT-фильтр, Hibernate, OpenAPI
+├── controller/  REST-контроллеры и обработчик ошибок
+├── dao/         DAO на Hibernate SessionFactory
+├── dto/         входные/выходные DTO
+├── entity/      User, Contact, RevokedToken
+├── service/     бизнес-логика, JWT, отзыв токенов
+└── util/        CSV-парсер и проверки
+src/main/resources/
+├── application.properties
+├── jdbc.properties
+├── hibernate.cfg.xml
+├── logback-spring.xml
+└── db/migration/
 ```
 
-### Обновить контакт
-```
-PUT /api/contacts/{id}
-```
+Логирование настраивается в `logback-spring.xml`: консоль и ротация в каталог `logs/`. Значения bind-параметров SQL на уровне TRACE намеренно не включены, чтобы не писать в журналы чувствительные данные.
 
-**Параметры пути:**
-- `id` - ID контакта для обновления
+## Ограничения
 
-**Пример запроса:**
-```
-PUT /api/contacts/1
-```
-
-**Тело запроса:**
-```json
-{
-    "firstName": "Иван",
-    "lastName": "Петров",
-    "phone": "+79161234567",
-    "email": "new.email@example.com"
-}
-```
-
-**Ответ:**
-```json
-{
-    "id": 1,
-    "firstName": "Иван",
-    "lastName": "Петров",
-    "phone": "+79169998877",
-    "email": "ivan.new@example.com"
-}
-```
-
-### Удалить контакт
-```
-DELETE /api/contacts/{id}
-```
-
-**Параметры пути:**
-- `id` - ID контакта для удаления
-
-**Пример запроса:**
-```
-DELETE /api/contacts/1
-```
-
-**Успешный ответ:**
-```
-204 No Content
-```
-
-## Обработка ошибок аутентификации и авторизации
-
-### Ошибка 401 Unauthorized
-```json
-{
-    "status": 401,
-    "error": "Unauthorized",
-    "message": "Полный аутентификационный заголовок не найден"
-}
-```
-
-### Ошибка 403 Forbidden
-```json
-{
-    "status": 403,
-    "error": "Forbidden",
-    "message": "Доступ запрещен. Недостаточно прав."
-}
-```
-
-## Обработка ошибок валидации
-
-### Формат ответа об ошибке
-```json
-{
-    "timestamp": "2023-08-05T19:12:19.123+00:00",
-    "status": 400,
-    "error": "Bad Request",
-    "message": "Validation failed",
-    "path": "/api/v1/contacts",
-    "details": [
-        {
-            "field": "phone",
-            "message": "Номер телефона не соответствует формату"
-        }
-    ]
-}
-```
-
-## Учетные данные по умолчанию
-
-В системе предустановлена учетная запись администратора со следующими данными:
-
-- **Логин:** `admin`
-- **Пароль:** `12345678`
-- **Email:** `admin@example.com`
-- **Роль:** `ROLE_ADMIN`
-
-Эта учетная запись создается автоматически при первом запуске приложения и имеет полные права доступа ко всем функциям системы.
-
-## Примеры использования с аутентификацией
-
-### Получение списка пользователей (требуется аутентификация администратора)
-```bash
-curl -X GET http://localhost:8080/api/users \
-  -H "Authorization: Bearer ваш_jwt_токен"
-```
-
-### Обновление пользователя
-```bash
-curl -X PUT http://localhost:8080/api/users/1 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ваш_jwt_токен" \
-  -d '{"username":"newUsername","email":"new@example.com","password":"newPassword123"}'
-```
-
-## ER-диаграмма
-
-```mermaid
-erDiagram
-    users ||--o{ user_contacts : ""
-    contacts ||--o{ user_contacts : ""
-    
-    users {
-        bigint user_id PK
-        varchar(50) name
-        varchar(50) password
-        varchar(50) email
-        varchar(20) role
-    }
-    
-    contacts {
-        bigint contact_id PK
-        varchar(50) name
-        varchar(50) surname
-        varchar(50) email
-        varchar(20) phone_number
-    }
-    
-    user_contacts {
-        bigint user_id FK
-        bigint contact_id FK
-    }
-
-```
-## Возможные улучшения
-1. Добавить пагинацию для GET /contacts
-2. Настроить логирование операций
-3. Добавить возможность смены ролей
+- пагинация API отсутствует;
+- формат `Basic_schema.sql` может не совпадать с текущими Hibernate mappings, файл не применяется автоматически;
+- отзыв JWT хранится в PostgreSQL и очищается от просроченных записей при следующем logout;
+- отдельного веб-клиента, Docker-конфигурации и облачного развёртывания в проекте нет.

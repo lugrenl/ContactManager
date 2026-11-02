@@ -5,6 +5,7 @@ import org.example.exceptions.UserAlreadyExistsException;
 import org.example.exceptions.UserNotFoundException;
 import org.example.entity.User;
 import org.example.service.UserDetailsServiceImpl;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -27,7 +28,7 @@ public class UserValidator implements Validator {
             userDetailsService.loadUserByUsername(user.getName());
             // If we get here, user exists
             throw new UserAlreadyExistsException("User with this username already exists");
-        } catch (UserNotFoundException ignored) {
+        } catch (UsernameNotFoundException | UserNotFoundException ignored) {
             // User isn't found, validation passes
         }
     }

@@ -11,5 +11,5 @@ public interface ContactDao {
     Contact updateContact(long contactId, Contact contact);
     List<Contact> getAllContacts();
     void deleteContact(long contactId);
-    Optional<Contact> findExistingContact(String name, String surname, String email, String phoneNumber);
+    Optional<Contact> findExistingContact(long ownerId, String name, String surname, String email, String phoneNumber);
 }

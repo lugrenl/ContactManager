@@ -4,6 +4,7 @@ import org.example.dao.ContactDao;
 import org.example.dto.ResponseContactDto;
 import org.example.entity.Contact;
 import org.example.entity.User;
+import org.example.exceptions.ContactAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,8 +20,11 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,14 +51,13 @@ class ContactServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Setup test user
         testUser = new User();
         testUser.setId(1L);
         testUser.setName("testuser");
         testUser.setPassword("password");
         testUser.setEmail("test@example.com");
+        testUser.setRole("ROLE_USER");
 
-        // Setup test contact
         testContact = new Contact();
         testContact.setId(1L);
         testContact.setName("John");
@@ -62,127 +65,145 @@ class ContactServiceTest {
         testContact.setEmail("john.doe@example.com");
         testContact.setPhoneNumber("+1234567890");
 
-        // Setup security context
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn("testuser");
         SecurityContextHolder.setContext(securityContext);
+        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
     }
 
     @Test
-    void addContactToCurrentUser_NewContact_Success() {
-        // Arrange
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
-        when(contactDao.findExistingContact(any(), any(), any(), any()))
+    void addContactToCurrentUser_NewContact_SetsOwnerAndPersists() {
+        when(contactDao.findExistingContact(eq(1L), any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
         when(contactDao.addContact(any(Contact.class))).thenReturn(1L);
 
-        // Act
         ResponseContactDto result = contactService.addContactToCurrentUser(testContact);
 
-        // Assert
-        assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
-        verify(userService).updateUser(eq(testUser.getId()), any(User.class));
+        assertThat(testContact.getOwner()).isSameAs(testUser);
+        assertThat(testUser.getContacts()).contains(testContact);
         verify(contactDao).addContact(any(Contact.class));
     }
 
     @Test
+    void addContactToCurrentUser_ExistingContact_ReusesItWithoutInsert() {
+        Contact existing = new Contact(7L, "John", "Doe", "john.doe@example.com", "+1234567890");
+        existing.setOwner(testUser);
+        when(contactDao.findExistingContact(eq(1L), any(), any(), any(), any()))
+                .thenReturn(Optional.of(existing));
+
+        ResponseContactDto result = contactService.addContactToCurrentUser(
+                new Contact("John", "Doe", "john.doe@example.com", "+1234567890"));
+
+        assertThat(result.getId()).isEqualTo(7L);
+        verify(contactDao, never()).addContact(any(Contact.class));
+    }
+
+    @Test
     void getContact_UserOwnsContact_ReturnsContact() {
-        // Arrange
         testUser.addContact(testContact);
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
         when(contactDao.getContact(1L)).thenReturn(testContact);
 
-        // Act
         ResponseContactDto result = contactService.getContact(1L);
 
-        // Assert
-        assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
     }
 
     @Test
     void getContact_UserDoesNotOwnContact_ThrowsAccessDenied() {
-        // Arrange
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
+        User other = new User();
+        other.setId(2L);
+        testContact.setOwner(other);
         when(contactDao.getContact(1L)).thenReturn(testContact);
 
-        // Act & Assert
         assertThatThrownBy(() -> contactService.getContact(1L))
                 .isInstanceOf(AccessDeniedException.class)
-                .hasMessage("Contact not belongs to user");
+                .hasMessage("Contact does not belong to the current user");
     }
 
     @Test
-    void updateContactForCurrentUser_Success() {
-        // Arrange
+    void updateContactForCurrentUser_UpdatesInPlaceAndKeepsId() {
         testUser.addContact(testContact);
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
+        Contact updated = new Contact();
+        updated.setName("Updated");
+        updated.setSurname("Contact");
+        updated.setEmail("updated@example.com");
+        updated.setPhoneNumber("+1987654321");
+
+        Contact managed = new Contact(1L, "Updated", "Contact", "updated@example.com", "+1987654321");
+        managed.setOwner(testUser);
+
         when(contactDao.getContact(1L)).thenReturn(testContact);
+        when(contactDao.findExistingContact(eq(1L), any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(contactDao.updateContact(1L, updated)).thenReturn(managed);
 
-        Contact updatedContact = new Contact();
-        updatedContact.setName("Updated");
-        updatedContact.setSurname("Contact");
-        updatedContact.setEmail("updated@example.com");
-        updatedContact.setPhoneNumber("+1987654321");
+        ResponseContactDto result = contactService.updateContactForCurrentUser(1L, updated);
 
-        // Act
-        ResponseContactDto result = contactService.updateContactForCurrentUser(1L, updatedContact);
-
-        // Assert
-        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getName()).isEqualTo("Updated");
-        verify(userService).updateUser(eq(testUser.getId()), any(User.class));
+        verify(contactDao).updateContact(1L, updated);
+        verify(contactDao, never()).addContact(any(Contact.class));
     }
 
     @Test
-    void deleteContactFromCurrentUser_Success() {
-        // Arrange
+    void updateContactForCurrentUser_DuplicateOfAnotherContact_ThrowsConflict() {
         testUser.addContact(testContact);
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
+        Contact other = new Contact(2L, "Jane", "Doe", "jane@example.com", null);
+        other.setOwner(testUser);
+        Contact changes = new Contact("Jane", "Doe", "jane@example.com", null);
+
+        when(contactDao.getContact(1L)).thenReturn(testContact);
+        when(contactDao.findExistingContact(eq(1L), any(), any(), any(), any()))
+                .thenReturn(Optional.of(other));
+
+        assertThatThrownBy(() -> contactService.updateContactForCurrentUser(1L, changes))
+                .isInstanceOf(ContactAlreadyExistsException.class);
+        verify(contactDao, never()).updateContact(anyLong(), any(Contact.class));
+    }
+
+    @Test
+    void deleteContactFromCurrentUser_RemovesPersonalContact() {
+        testUser.addContact(testContact);
         when(contactDao.getContact(1L)).thenReturn(testContact);
 
-        // Act
         contactService.deleteContactFromCurrentUser(1L);
 
-        // Assert
         assertThat(testUser.getContacts()).doesNotContain(testContact);
-        verify(userService).updateUser(eq(testUser.getId()), any(User.class));
-        verify(contactDao).deleteContact(1L);
     }
 
     @Test
-    void getContactsForCurrentUser_ReturnsUserContacts() {
-        // Arrange
+    void getContactsForCurrentUser_ReturnsOnlyOwnContacts() {
         testUser.addContact(testContact);
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
+        Contact other = new Contact(2L, "Jane", "Doe", "jane@example.com", null);
+        User otherUser = new User();
+        otherUser.setId(2L);
+        other.setOwner(otherUser);
 
-        // Act
         Set<ResponseContactDto> result = contactService.getContactsForCurrentUser();
 
-        // Assert
         assertThat(result).hasSize(1);
         assertThat(result.iterator().next().getId()).isEqualTo(1L);
     }
 
     @Test
     void updateContact_ContactNotOwned_ThrowsAccessDenied() {
-        // Arrange
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
+        User other = new User();
+        other.setId(2L);
+        testContact.setOwner(other);
         when(contactDao.getContact(1L)).thenReturn(testContact);
 
-        // Act & Assert
         assertThatThrownBy(() -> contactService.updateContactForCurrentUser(1L, new Contact()))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
     void deleteContact_ContactNotOwned_ThrowsAccessDenied() {
-        // Arrange
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
+        User other = new User();
+        other.setId(2L);
+        testContact.setOwner(other);
         when(contactDao.getContact(1L)).thenReturn(testContact);
 
-        // Act & Assert
         assertThatThrownBy(() -> contactService.deleteContactFromCurrentUser(1L))
                 .isInstanceOf(AccessDeniedException.class);
     }

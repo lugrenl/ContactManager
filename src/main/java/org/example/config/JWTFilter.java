@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.example.exceptions.TokenException;
+import org.example.exceptions.UserNotFoundException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -49,25 +50,30 @@ public class JWTFilter extends OncePerRequestFilter {
         // Извлекаем токен из заголовка
         String jwt = authHeader.substring(BEARER_PREFIX.length());
 
-        // Проверяем, не в черном ли списке токен
-        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
-            log.warn("Attempt to use blacklisted token");
-            jwtAuthenticationEntryPoint.commence(request, response, 
-                new TokenException("Token has been blacklisted"));
+        // Пустой токен недопустим
+        if (jwt.isBlank()) {
+            reject(request, response, "Invalid JWT Token: Token is empty");
             return;
         }
 
-        // JWT токен уже извлечен выше
-        if (jwt.isBlank()) {
-            jwtAuthenticationEntryPoint.commence(request, response, 
-                new TokenException("Invalid JWT Token: Token is empty"));
+        String username;
+        try {
+            // Сначала проверяем подпись, срок действия и остальные условия валидности
+            username = jwtUtil.validateTokenAndRetrieveClaim(jwt);
+        } catch (JWTVerificationException e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
+            reject(request, response, "Invalid JWT Token: " + e.getMessage());
+            return;
+        }
+
+        // Проверяем отзыв только для криптографически валидного токена
+        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+            log.warn("Attempt to use revoked token");
+            reject(request, response, "Token has been revoked");
             return;
         }
 
         try {
-            // Валидируем токен и получаем username
-            String username = jwtUtil.validateTokenAndRetrieveClaim(jwt);
-
             // Загружаем UserDetails
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
@@ -82,19 +88,19 @@ public class JWTFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authToken);
             log.debug("Authenticated user: {}", username);
 
-        } catch (JWTVerificationException e) {
-            log.warn("Invalid JWT token: {}", e.getMessage());
-            jwtAuthenticationEntryPoint.commence(request, response, 
-                new TokenException("Invalid JWT Token: " + e.getMessage()));
-            return;
-        } catch (UsernameNotFoundException e) {
-            log.warn("User not found: {}", e.getMessage());
-            jwtAuthenticationEntryPoint.commence(request, response, 
-                new TokenException("User not found: " + e.getMessage()));
+        } catch (UsernameNotFoundException | UserNotFoundException e) {
+            log.warn("User referenced by JWT no longer exists: {}", e.getMessage());
+            reject(request, response, "User not found");
             return;
         }
 
         // Продолжаем цепочку фильтров
         filterChain.doFilter(request, response);
+    }
+
+    private void reject(HttpServletRequest request, HttpServletResponse response, String message)
+            throws IOException {
+        SecurityContextHolder.clearContext();
+        jwtAuthenticationEntryPoint.commence(request, response, new TokenException(message));
     }
 }

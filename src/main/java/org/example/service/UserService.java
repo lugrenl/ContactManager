@@ -1,21 +1,25 @@
 package org.example.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.dao.UserDao;
 import org.example.dto.ResponseUserDto;
+import org.example.exceptions.UserAlreadyExistsException;
 import org.example.exceptions.UserNotFoundException;
 import org.example.entity.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    private static final Set<String> ALLOWED_ROLES = Set.of("ROLE_USER", "ROLE_ADMIN");
+
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
 
@@ -33,6 +37,14 @@ public class UserService {
 
     @Transactional
     public ResponseUserDto updateUser(long userId, User user) {
+        validateRole(user.getRole());
+        if (user.getName() != null) {
+            userDao.findByUsername(user.getName())
+                    .filter(existing -> existing.getId() != userId)
+                    .ifPresent(existing -> {
+                        throw new UserAlreadyExistsException("User with this username already exists");
+                    });
+        }
         if (user.getPassword() != null) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
@@ -47,12 +59,23 @@ public class UserService {
         userDao.deleteUser(userId);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public User getUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> user = userDao.findByUsername(username);
         if (user.isEmpty()) {
             throw new UserNotFoundException("User not found with username: " + username);
         }
         return user.get();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findUserByUsername(String username) {
+        return userDao.findByUsername(username);
+    }
+
+    private static void validateRole(String role) {
+        if (role != null && !ALLOWED_ROLES.contains(role)) {
+            throw new IllegalArgumentException("Unsupported role: " + role);
+        }
     }
 }

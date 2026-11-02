@@ -5,6 +5,7 @@ import org.example.dto.AppErrorResponse;
 import org.example.exceptions.*;
 import org.example.dto.ValidationErrorResponse;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,8 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.List;
 import java.util.Locale;
@@ -49,6 +52,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(InvalidCsvException.class)
+    public ResponseEntity<AppErrorResponse> handleInvalidCsvException(InvalidCsvException e) {
+        AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<AppErrorResponse> handleUserNotFoundException(UserNotFoundException e) {
         AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
@@ -61,10 +70,44 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(ContactAlreadyExistsException.class)
+    public ResponseEntity<AppErrorResponse> handleContactAlreadyExistsException(ContactAlreadyExistsException e) {
+        AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(ContactAccessDeniedException.class)
+    public ResponseEntity<AppErrorResponse> handleContactAccessDeniedException(ContactAccessDeniedException e) {
+        AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<AppErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        AppErrorResponse response = new AppErrorResponse(
+                "Data conflicts with an existing record", System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(IncorrectCredentialsException.class)
     public ResponseEntity<AppErrorResponse> handleIncorrectCredentialsException(IncorrectCredentialsException e) {
         AppErrorResponse response = new AppErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<AppErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        AppErrorResponse response = new AppErrorResponse(
+                "Uploaded file exceeds the configured size limit", System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<AppErrorResponse> handleMissingServletRequestPartException(
+            MissingServletRequestPartException e) {
+        AppErrorResponse response = new AppErrorResponse(
+                "Required multipart file part is missing: " + e.getRequestPartName(), System.currentTimeMillis());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
     
     @ExceptionHandler(TokenException.class)

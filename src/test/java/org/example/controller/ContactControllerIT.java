@@ -155,9 +155,69 @@ public class ContactControllerIT {
                 .put("/api/contacts/" + contactId)
                 .then()
                 .statusCode(HttpStatus.OK.value())
-                .body("id", equalTo(contactId+1))
+                .body("id", equalTo(contactId))
                 .body("name", equalTo("Updated"))
                 .body("email", equalTo("updated@example.com"));
+    }
+
+    @Test
+    public void whenUpdateToAnotherOwnContact_thenReturnsConflict() {
+        Integer firstId = given()
+                .header("Authorization", "Bearer " + authToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "First",
+                        "surname": "Contact",
+                        "email": "first@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/contacts")
+                .then()
+                .statusCode(HttpStatus.CREATED.value())
+                .extract()
+                .path("id");
+
+        Integer secondId = given()
+                .header("Authorization", "Bearer " + authToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "Second",
+                        "surname": "Contact",
+                        "email": "second@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/contacts")
+                .then()
+                .statusCode(HttpStatus.CREATED.value())
+                .extract()
+                .path("id");
+
+        given()
+                .header("Authorization", "Bearer " + authToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "First",
+                        "surname": "Contact",
+                        "email": "first@example.com"
+                    }
+                    """)
+                .when()
+                .put("/api/contacts/" + secondId)
+                .then()
+                .statusCode(HttpStatus.CONFLICT.value());
+
+        given()
+                .header("Authorization", "Bearer " + authToken)
+                .when()
+                .get("/api/contacts/" + firstId)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("name", equalTo("First"));
     }
 
     @Test

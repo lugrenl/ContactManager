@@ -35,7 +35,7 @@ public class UserControllerIT {
                 .body("""
                     {
                         "name": "admin",
-                        "password": "12345678"
+                        "password": "adminpass123"
                     }
                     """)
                 .when()
@@ -199,6 +199,315 @@ public class UserControllerIT {
                 .get("/api/users/" + userId)
                 .then()
                 .statusCode(HttpStatus.NOT_FOUND.value());
+    }
+
+    @Test
+    public void whenAdminUpdatesUser_thenContactsAndLinksArePreserved() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "contactsuser",
+                        "password": "contactspass123",
+                        "email": "contactsuser@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/auth/register")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+
+        String contactsUserToken = given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "contactsuser",
+                        "password": "contactspass123"
+                    }
+                    """)
+                .when()
+                .post("/api/auth/login")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .path("jwt-token");
+
+        Integer firstContactId = given()
+                .header("Authorization", "Bearer " + contactsUserToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "First",
+                        "surname": "Contact",
+                        "email": "first.contact@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/contacts")
+                .then()
+                .statusCode(HttpStatus.CREATED.value())
+                .extract()
+                .path("id");
+
+        Integer secondContactId = given()
+                .header("Authorization", "Bearer " + contactsUserToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "Second",
+                        "surname": "Contact",
+                        "email": "second.contact@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/contacts")
+                .then()
+                .statusCode(HttpStatus.CREATED.value())
+                .extract()
+                .path("id");
+
+        Long userId = given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .when()
+                .get("/api/users")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .jsonPath()
+                .getLong("find { it.name == 'contactsuser' }.id");
+
+        given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "contactsuser",
+                        "email": "contactsuser.updated@example.com",
+                        "password": "newcontactspass123",
+                        "role": "ROLE_USER"
+                    }
+                    """)
+                .when()
+                .put("/api/users/" + userId)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("contactIds", containsInAnyOrder(firstContactId, secondContactId));
+
+        given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .when()
+                .get("/api/users/" + userId)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("email", equalTo("contactsuser.updated@example.com"))
+                .body("contactIds", containsInAnyOrder(firstContactId, secondContactId));
+
+        given()
+                .header("Authorization", "Bearer " + contactsUserToken)
+                .when()
+                .get("/api/contacts")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("$", hasSize(2));
+    }
+
+    @Test
+    public void whenAdminChangesRole_thenNewRoleIsPersistedAndUsedForAuthorization() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "roleuser",
+                        "password": "rolepass123",
+                        "email": "roleuser@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/auth/register")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+
+        String roleUserToken = given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "roleuser",
+                        "password": "rolepass123"
+                    }
+                    """)
+                .when()
+                .post("/api/auth/login")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .path("jwt-token");
+
+        Long userId = given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .when()
+                .get("/api/users")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .jsonPath()
+                .getLong("find { it.name == 'roleuser' }.id");
+
+        given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "roleuser",
+                        "email": "roleuser@example.com",
+                        "password": "newrolepass123",
+                        "role": "ROLE_ADMIN"
+                    }
+                    """)
+                .when()
+                .put("/api/users/" + userId)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("role", equalTo("ROLE_ADMIN"));
+
+        given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .when()
+                .get("/api/users/" + userId)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("role", equalTo("ROLE_ADMIN"));
+
+        given()
+                .header("Authorization", "Bearer " + roleUserToken)
+                .when()
+                .get("/api/users")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+    }
+
+    @Test
+    public void whenRegisteringDuplicateName_thenReturnsConflict() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "duplicateuser",
+                        "password": "duplicatepass123",
+                        "email": "duplicate1@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/auth/register")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "duplicateuser",
+                        "password": "duplicatepass456",
+                        "email": "duplicate2@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/auth/register")
+                .then()
+                .statusCode(HttpStatus.CONFLICT.value());
+    }
+
+    @Test
+    public void whenAdminRenamesUserToOccupiedName_thenReturnsConflictAndKeepsOriginalName() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "firstowner",
+                        "password": "firstpass123",
+                        "email": "firstowner@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/auth/register")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "secondowner",
+                        "password": "secondpass123",
+                        "email": "secondowner@example.com"
+                    }
+                    """)
+                .when()
+                .post("/api/auth/register")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+
+        Long firstUserId = given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .when()
+                .get("/api/users")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .jsonPath()
+                .getLong("find { it.name == 'firstowner' }.id");
+
+        given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "secondowner",
+                        "email": "firstowner@example.com",
+                        "password": "firstpass123",
+                        "role": "ROLE_USER"
+                    }
+                    """)
+                .when()
+                .put("/api/users/" + firstUserId)
+                .then()
+                .statusCode(HttpStatus.CONFLICT.value());
+
+        given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .when()
+                .get("/api/users/" + firstUserId)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("name", equalTo("firstowner"));
+    }
+
+    @Test
+    public void whenAdminSetsUnsupportedRole_thenReturnsBadRequest() {
+        Long userId = given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .when()
+                .get("/api/users")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .extract()
+                .jsonPath()
+                .getLong("[0].id");
+
+        given()
+                .header("Authorization", "Bearer " + adminAuthToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "name": "admin",
+                        "email": "admin@example.com",
+                        "password": "adminpass123",
+                        "role": "ROLE_SUPERUSER"
+                    }
+                    """)
+                .when()
+                .put("/api/users/" + userId)
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
     }
 
     @Test

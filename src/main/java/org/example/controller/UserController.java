@@ -40,8 +40,8 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found",
                     content = @Content(schema = @Schema(implementation = ResponseUserDto.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT, or insufficient role",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
@@ -61,8 +61,8 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved users",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResponseUserDto.class)))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT, or insufficient role",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -75,9 +75,11 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "User updated successfully",
                     content = @Content(schema = @Schema(implementation = ResponseUserDto.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT, or insufficient role",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Username is already in use",
                     content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })
     @PutMapping(value = "/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -106,8 +108,8 @@ public class UserController {
     @Operation(summary = "Delete user", description = "Deletes a user by ID (Admin only)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User deleted successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT, or insufficient role",
+                    content = @Content(schema = @Schema(implementation = AppErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(schema = @Schema(implementation = AppErrorResponse.class)))
     })

@@ -10,9 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -39,7 +37,7 @@ public class ContactsControllerIT {
                 .body("""
                     {
                         "name": "admin",
-                        "password": "12345678"
+                        "password": "adminpass123"
                     }
                     """)
                 .when()
@@ -89,60 +87,41 @@ public class ContactsControllerIT {
     }
 
     @Test
-    public void whenImportContactsAsAdmin_thenReturnOk() throws Exception {
-        // Create a temporary CSV file for testing
+    public void whenImportContactsAsAdmin_thenReturnOk() {
         String csvContent = "John,Doe,testmail1@mail.com,1234567890\n" +
                             "Jane,Smith,testmail2@mail.com,0987654321";
 
-        File tempFile = File.createTempFile("test-contacts", ".csv");
-        try (FileWriter writer = new FileWriter(tempFile)) {
-            writer.write(csvContent);
-        }
-
         given()
-                .log().all()  // Log all request details
                 .header("Authorization", "Bearer " + adminToken)
-                .param("filePath", tempFile.getAbsolutePath())
+                .multiPart("file", "contacts.csv",
+                        csvContent.getBytes(StandardCharsets.UTF_8), "text/csv")
                 .when()
                 .post("/api/contacts/import")
                 .then()
-                .log().all()  // Log all response details
                 .statusCode(HttpStatus.OK.value());
-
-        // Clean up
-        tempFile.delete();
     }
 
     @Test
-    public void whenImportContactsAsUser_thenReturnOk() throws IOException {
-        // Create a temporary CSV file for testing
+    public void whenImportContactsAsUser_thenReturnOk() {
         String csvContent = "John,Doe,john@example.com,1234567890\n" +
                             "Jane,Smith,jane@example.com,0987654321";
 
-        File tempFile = File.createTempFile("test-contacts", ".csv");
-        try (FileWriter writer = new FileWriter(tempFile)) {
-            writer.write(csvContent);
-        }
-
         given()
-                .log().all()  // Log all request details
                 .header("Authorization", "Bearer " + userToken)
-                .param("filePath", tempFile.getAbsolutePath())
+                .multiPart("file", "contacts.csv",
+                        csvContent.getBytes(StandardCharsets.UTF_8), "text/csv")
                 .when()
                 .post("/api/contacts/import")
                 .then()
-                .log().all()  // Log all response details
                 .statusCode(HttpStatus.OK.value());
-
-        // Clean up
-        tempFile.delete();
     }
 
     @Test
-    public void whenImportContactsWithoutFile_thenReturnBadRequest() {
+    public void whenImportContactsWithoutFilePart_thenReturnBadRequest() {
         given()
                 .header("Authorization", "Bearer " + adminToken)
-                .param("filePath", "./test_none.csv")
+                .multiPart("other", "contacts.csv",
+                        "John,Doe,john@example.com,123".getBytes(StandardCharsets.UTF_8), "text/csv")
                 .when()
                 .post("/api/contacts/import")
                 .then()

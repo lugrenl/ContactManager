@@ -21,17 +21,14 @@ public class HibernateContactDao implements ContactDao {
 
     @Override
     public long addContact(Contact contact) {
-        try(var session = sessionFactory.openSession()) {
-            var transaction = session.beginTransaction();
-            long contactId = (Long) session.save(contact);
-            transaction.commit();
-            return contactId;
-        }
+        var session = sessionFactory.getCurrentSession();
+        return (Long) session.save(contact);
     }
 
     @Override
     public Contact getContact(long contactId) {
-        try (Session session = sessionFactory.openSession()) {
+        try {
+            Session session = sessionFactory.getCurrentSession();
             Contact contact = session.get(Contact.class, contactId);
             if (contact == null) {
                 throw new ContactNotFoundException("Contact not found with ID: " + contactId);
@@ -45,57 +42,62 @@ public class HibernateContactDao implements ContactDao {
 
     @Override
     public Contact updateContact(long contactId, Contact contact) {
-        try(var session = sessionFactory.openSession()) {
-            var transaction = session.beginTransaction();
-            var contactToUpdate = session.get(Contact.class, contactId);
-            if (contactToUpdate != null) {
-                contactToUpdate.setName(contact.getName());
-                contactToUpdate.setSurname(contact.getSurname());
-                contactToUpdate.setEmail(contact.getEmail());
-                contactToUpdate.setPhoneNumber(contact.getPhoneNumber());
-            } else {
-                throw new ContactNotFoundException("Contact not found with ID: " + contactId);
-            }
-            transaction.commit();
-            return contactToUpdate;
+        var session = sessionFactory.getCurrentSession();
+        var contactToUpdate = session.get(Contact.class, contactId);
+        if (contactToUpdate == null) {
+            throw new ContactNotFoundException("Contact not found with ID: " + contactId);
         }
+        contactToUpdate.setName(contact.getName());
+        contactToUpdate.setSurname(contact.getSurname());
+        contactToUpdate.setEmail(contact.getEmail());
+        contactToUpdate.setPhoneNumber(contact.getPhoneNumber());
+        return contactToUpdate;
     }
 
     @Override
     public List<Contact> getAllContacts() {
-        try(var session = sessionFactory.openSession()) {
-            return session.createQuery("from Contact", Contact.class).getResultList();
-        }
+        var session = sessionFactory.getCurrentSession();
+        return session.createQuery("select c from Contact c join fetch c.owner", Contact.class)
+                .getResultList();
     }
 
     @Override
     public void deleteContact(long contactId) {
-        try(var session = sessionFactory.openSession()) {
-            var transaction = session.beginTransaction();
-            var contact = session.get(Contact.class, contactId);
-            if (contact != null) {
-                session.remove(contact);
-            } else {
-                throw new ContactNotFoundException("Contact not found with ID: " + contactId);
-            }
-            transaction.commit();
+        var session = sessionFactory.getCurrentSession();
+        var contact = session.get(Contact.class, contactId);
+        if (contact == null) {
+            throw new ContactNotFoundException("Contact not found with ID: " + contactId);
         }
+        session.remove(contact);
     }
 
     @Override
-    public Optional<Contact> findExistingContact(String name, String surname, String email, String phoneNumber) {
-        try (var session = sessionFactory.openSession()) {
-            String hql = "FROM Contact c WHERE c.name = :name " +
-                    "AND c.surname = :surname " +
-                    "AND c.email = :email " +
-                    "AND c.phoneNumber = :phoneNumber";
-
-            return session.createQuery(hql, Contact.class)
-                    .setParameter("name", name)
-                    .setParameter("surname", surname)
-                    .setParameter("email", email)
-                    .setParameter("phoneNumber", phoneNumber)
-                    .uniqueResultOptional();
+    public Optional<Contact> findExistingContact(long ownerId, String name, String surname, String email,
+                                                 String phoneNumber) {
+        var session = sessionFactory.getCurrentSession();
+        StringBuilder hql = new StringBuilder(
+                "FROM Contact c WHERE c.owner.id = :ownerId AND c.name = :name AND c.surname = :surname");
+        if (email == null) {
+            hql.append(" AND c.email IS NULL");
+        } else {
+            hql.append(" AND c.email = :email");
         }
+        if (phoneNumber == null) {
+            hql.append(" AND c.phoneNumber IS NULL");
+        } else {
+            hql.append(" AND c.phoneNumber = :phoneNumber");
+        }
+
+        var query = session.createQuery(hql.toString(), Contact.class)
+                .setParameter("ownerId", ownerId)
+                .setParameter("name", name)
+                .setParameter("surname", surname);
+        if (email != null) {
+            query.setParameter("email", email);
+        }
+        if (phoneNumber != null) {
+            query.setParameter("phoneNumber", phoneNumber);
+        }
+        return query.uniqueResultOptional();
     }
 }

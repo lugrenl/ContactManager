@@ -5,6 +5,8 @@ import org.example.entity.User;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 
@@ -15,12 +17,13 @@ import java.util.Optional;
 public class TestConfig {
 
     @Bean
-    public CommandLineRunner initTestData(PasswordEncoder passwordEncoder, UserDao userDao) {
-        return args -> {
-            // Create test users if they don't exist
+    public CommandLineRunner initTestData(PasswordEncoder passwordEncoder, UserDao userDao,
+                                          PlatformTransactionManager transactionManager) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        return args -> transactionTemplate.executeWithoutResult(status -> {
+            // The administrator is created from admin.* properties by ContactsManagerConfig.
             createUserIfNotExists("testuser", "testpass123", "ROLE_USER", "test@example.com", passwordEncoder, userDao);
-            createUserIfNotExists("admin", "adminpass", "ROLE_ADMIN", "admin@example.com", passwordEncoder, userDao);
-        };
+        });
     }
 
     private void createUserIfNotExists(String username, String password, String role, String email, 

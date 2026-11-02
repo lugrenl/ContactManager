@@ -3,16 +3,12 @@ package org.example.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
-
-import java.util.HashSet;
-import java.util.Set;
+import org.hibernate.Hibernate;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@ToString(exclude = "users")
-@EqualsAndHashCode(exclude = "users")
+@ToString(exclude = "owner")
 @Entity
 @Table(name = "contacts")
 public class Contact {
@@ -43,20 +39,9 @@ public class Contact {
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @ManyToMany(mappedBy = "contacts", fetch = FetchType.EAGER)
-    private Set<User> users = new HashSet<>();
-    
-    // Вспомогательный метод для двунаправленного связывания
-    public void addUser(User user) {
-        users.add(user);
-        user.getContacts().add(this);
-    }
-
-    // Вспомогательный метод для двунаправленного удаления
-    public void removeUser(User user) {
-        users.remove(user);
-        user.getContacts().remove(this);
-    }
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User owner;
 
     public Contact(String name, String surname, String email, String phoneNumber) {
         this.name = name;
@@ -71,5 +56,22 @@ public class Contact {
         this.surname = surname;
         this.email = email;
         this.phoneNumber = phoneNumber;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) {
+            return false;
+        }
+        Contact contact = (Contact) other;
+        return getId() != 0 && getId() == contact.getId();
+    }
+
+    @Override
+    public int hashCode() {
+        return Hibernate.getClass(this).hashCode();
     }
 }

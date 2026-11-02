@@ -9,7 +9,7 @@ import org.example.entity.User;
 
 @Data
 @NoArgsConstructor
-@Schema(description = "DTO for creating or updating a user (admin only)")
+@Schema(description = "DTO for updating a user (admin only)")
 public class RequestUserDto {
 
     @Schema(description = "User's username", example = "johndoe", required = true, 
@@ -20,8 +20,8 @@ public class RequestUserDto {
     @JsonProperty("name")
     private String name;
 
-    @Schema(description = "User's password. Required when creating a user, optional when updating.", 
-            example = "securePassword123!", required = false, format = "password")
+    @Schema(description = "User's new password. Required by validation for the update endpoint.",
+            example = "securePassword123!", required = true, format = "password")
     @NotBlank(message = "Password is required")
     @NotEmpty(message = "Password should not be empty")
     @Size(min = 8, max = 20, message = "Password should be between 8 and 20 characters")
@@ -36,9 +36,10 @@ public class RequestUserDto {
     @JsonProperty("email")
     private String email;
 
-    @Schema(description = "User's role. Default is 'ROLE_USER' if not specified.", 
-            example = "ROLE_USER", allowableValues = {"ROLE_USER", "ROLE_ADMIN"}, 
+    @Schema(description = "User's role. If omitted, the existing role is kept.",
+            example = "ROLE_USER", allowableValues = {"ROLE_USER", "ROLE_ADMIN"},
             required = false)
+    @Pattern(regexp = "ROLE_USER|ROLE_ADMIN", message = "Role must be ROLE_USER or ROLE_ADMIN")
     @JsonProperty("role")
     private String role;
 

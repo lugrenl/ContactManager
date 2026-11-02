@@ -1,14 +1,15 @@
 package org.example.dao;
 
 import org.example.entity.Contact;
+import org.example.entity.User;
 import org.example.exceptions.ContactNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -38,44 +39,43 @@ class HibernateContactDaoTest {
     private HibernateContactDao contactDao;
 
     private Contact testContact;
+    private User owner;
 
     @BeforeEach
     void setUp() {
-        when(sessionFactory.openSession()).thenReturn(session);
-        
+        when(sessionFactory.getCurrentSession()).thenReturn(session);
+
+        owner = new User();
+        owner.setId(1L);
+
         testContact = new Contact();
         testContact.setId(1L);
         testContact.setName("John");
         testContact.setSurname("Doe");
         testContact.setEmail("john.doe@example.com");
         testContact.setPhoneNumber("+1234567890");
+        testContact.setOwner(owner);
     }
 
     @Test
     void testGetAllContacts() {
-        // Arrange
         List<Contact> expectedContacts = Arrays.asList(testContact, new Contact(), new Contact());
         when(session.createQuery(anyString(), eq(Contact.class))).thenReturn(query);
         when(query.getResultList()).thenReturn(expectedContacts);
 
-        // Act
         List<Contact> result = contactDao.getAllContacts();
 
-        // Assert
         assertNotNull(result);
         assertEquals(3, result.size());
-        verify(session).createQuery("from Contact", Contact.class);
+        verify(session).createQuery("select c from Contact c join fetch c.owner", Contact.class);
     }
 
     @Test
     void testGetContact_ContactExists() {
-        // Arrange
         when(session.get(Contact.class, 1L)).thenReturn(testContact);
 
-        // Act
         Contact result = contactDao.getContact(1L);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("John", result.getName());
@@ -84,116 +84,84 @@ class HibernateContactDaoTest {
 
     @Test
     void testGetContact_ContactNotExists() {
-        // Arrange
         when(session.get(Contact.class, 999L)).thenReturn(null);
 
-        // Act & Assert
         assertThrows(ContactNotFoundException.class, () -> contactDao.getContact(999L));
     }
 
     @Test
     void testAddContact() {
-        // Arrange
-        Transaction transaction = mock(Transaction.class);
-        when(session.beginTransaction()).thenReturn(transaction);
         when(session.save(any(Contact.class))).thenReturn(1L);
 
-        // Act
         long contactId = contactDao.addContact(testContact);
 
-        // Assert
         assertEquals(1L, contactId);
-        verify(session).beginTransaction();
         verify(session).save(any(Contact.class));
-        verify(transaction).commit();
+        verify(session, never()).close();
     }
 
     @Test
     void testUpdateContact_ContactExists() {
-        // Arrange
         Contact updatedContact = new Contact();
         updatedContact.setName("Jane");
         updatedContact.setSurname("Smith");
         updatedContact.setEmail("jane.smith@example.com");
         updatedContact.setPhoneNumber("+1987654321");
 
-        Transaction transaction = mock(Transaction.class);
-        when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(Contact.class, 1L)).thenReturn(testContact);
 
-        // Act
         Contact result = contactDao.updateContact(1L, updatedContact);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Jane", result.getName());
         assertEquals("Smith", result.getSurname());
         assertEquals("jane.smith@example.com", result.getEmail());
         assertEquals("+1987654321", result.getPhoneNumber());
 
-        verify(session).beginTransaction();
         verify(session).get(Contact.class, 1L);
-        verify(transaction).commit();
     }
 
     @Test
     void testUpdateContact_ContactNotExists() {
-        // Arrange
         Contact updatedContact = new Contact();
         when(session.get(Contact.class, 999L)).thenReturn(null);
-        when(session.getTransaction()).thenReturn(mock(org.hibernate.Transaction.class));
 
-        // Act & Assert
-        assertThrows(ContactNotFoundException.class, 
-            () -> contactDao.updateContact(999L, updatedContact));
-        verify(session.getTransaction(), never()).commit();
+        assertThrows(ContactNotFoundException.class,
+                () -> contactDao.updateContact(999L, updatedContact));
     }
 
     @Test
     void testDeleteContact_ContactExists() {
-        // Arrange
-        Transaction transaction = mock(Transaction.class);
-        when(session.beginTransaction()).thenReturn(transaction);
         when(session.get(Contact.class, 1L)).thenReturn(testContact);
 
-        // Act
         contactDao.deleteContact(1L);
 
-        // Assert
-        verify(session).beginTransaction();
         verify(session).get(Contact.class, 1L);
         verify(session).remove(testContact);
-        verify(transaction).commit();
     }
 
     @Test
     void testDeleteContact_ContactNotExists() {
-        // Arrange
         when(session.get(Contact.class, 999L)).thenReturn(null);
-        when(session.getTransaction()).thenReturn(mock(Transaction.class));
 
-        // Act & Assert
-        assertThrows(ContactNotFoundException.class, 
-            () -> contactDao.deleteContact(999L));
+        assertThrows(ContactNotFoundException.class,
+                () -> contactDao.deleteContact(999L));
         verify(session, never()).remove(any(Contact.class));
-        verify(session.getTransaction(), never()).commit();
     }
 
     @Test
     void testFindExistingContact_ContactExists() {
-        // Arrange
         when(session.createQuery(anyString(), eq(Contact.class))).thenReturn(query);
         when(query.setParameter(anyString(), any())).thenReturn(query);
         when(query.uniqueResultOptional()).thenReturn(Optional.of(testContact));
 
-        // Act
         Optional<Contact> result = contactDao.findExistingContact(
-            "John", "Doe", "john.doe@example.com", "+1234567890");
+                1L, "John", "Doe", "john.doe@example.com", "+1234567890");
 
-        // Assert
         assertTrue(result.isPresent());
         assertEquals("John", result.get().getName());
         assertEquals("Doe", result.get().getSurname());
+        verify(query).setParameter("ownerId", 1L);
         verify(query).setParameter("name", "John");
         verify(query).setParameter("surname", "Doe");
         verify(query).setParameter("email", "john.doe@example.com");
@@ -202,16 +170,62 @@ class HibernateContactDaoTest {
 
     @Test
     void testFindExistingContact_ContactNotExists() {
-        // Arrange
         when(session.createQuery(anyString(), eq(Contact.class))).thenReturn(query);
         when(query.setParameter(anyString(), any())).thenReturn(query);
         when(query.uniqueResultOptional()).thenReturn(Optional.empty());
 
-        // Act
         Optional<Contact> result = contactDao.findExistingContact(
-            "Nonexistent", "Contact", "nonexistent@example.com", "+0000000000");
+                1L, "Nonexistent", "Contact", "nonexistent@example.com", "+0000000000");
 
-        // Assert
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testFindExistingContact_WithNullEmail_UsesIsNullPredicate() {
+        when(session.createQuery(anyString(), eq(Contact.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.uniqueResultOptional()).thenReturn(Optional.of(testContact));
+
+        contactDao.findExistingContact(1L, "John", "Doe", null, "+1234567890");
+
+        ArgumentCaptor<String> hqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(session).createQuery(hqlCaptor.capture(), eq(Contact.class));
+        assertTrue(hqlCaptor.getValue().contains("c.owner.id = :ownerId"));
+        assertTrue(hqlCaptor.getValue().contains("c.email IS NULL"));
+        verify(query, never()).setParameter(eq("email"), any());
+        verify(query).setParameter("phoneNumber", "+1234567890");
+    }
+
+    @Test
+    void testFindExistingContact_WithNullPhone_UsesIsNullPredicate() {
+        when(session.createQuery(anyString(), eq(Contact.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.uniqueResultOptional()).thenReturn(Optional.of(testContact));
+
+        contactDao.findExistingContact(1L, "John", "Doe", "john.doe@example.com", null);
+
+        ArgumentCaptor<String> hqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(session).createQuery(hqlCaptor.capture(), eq(Contact.class));
+        assertTrue(hqlCaptor.getValue().contains("c.owner.id = :ownerId"));
+        assertTrue(hqlCaptor.getValue().contains("c.phoneNumber IS NULL"));
+        verify(query).setParameter("email", "john.doe@example.com");
+        verify(query, never()).setParameter(eq("phoneNumber"), any());
+    }
+
+    @Test
+    void testFindExistingContact_WithBothOptionalFieldsNull_UsesIsNullPredicates() {
+        when(session.createQuery(anyString(), eq(Contact.class))).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.uniqueResultOptional()).thenReturn(Optional.of(testContact));
+
+        contactDao.findExistingContact(1L, "John", "Doe", null, null);
+
+        ArgumentCaptor<String> hqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(session).createQuery(hqlCaptor.capture(), eq(Contact.class));
+        assertTrue(hqlCaptor.getValue().contains("c.owner.id = :ownerId"));
+        assertTrue(hqlCaptor.getValue().contains("c.email IS NULL"));
+        assertTrue(hqlCaptor.getValue().contains("c.phoneNumber IS NULL"));
+        verify(query, never()).setParameter(eq("email"), any());
+        verify(query, never()).setParameter(eq("phoneNumber"), any());
     }
 }

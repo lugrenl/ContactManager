@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.dao.ContactDao;
+import org.example.dto.AdminContactDto;
 import org.example.dto.ResponseContactDto;
 import org.example.entity.Contact;
 import org.example.entity.User;
@@ -17,13 +18,14 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
 
-import java.nio.file.Paths;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,6 +63,7 @@ class ContactsServiceTest {
         testContact.setSurname("Doe");
         testContact.setEmail("john.doe@example.com");
         testContact.setPhoneNumber("+1234567890");
+        testContact.setOwner(testUser);
     }
     
     private void setupSecurityContext() {
@@ -77,24 +80,26 @@ class ContactsServiceTest {
         when(contactDao.getAllContacts()).thenReturn(List.of(testContact));
 
         // Act
-        List<ResponseContactDto> result = contactService.getAllContacts();
+        List<AdminContactDto> result = contactService.getAllContacts();
 
         // Assert
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(1L);
+        assertThat(result.get(0).getOwnerId()).isEqualTo(1L);
     }
     
     @Test
-    void saveAll_ProcessesFileSuccessfully() throws Exception {
+    void saveAll_ProcessesStreamSuccessfully() {
         // Arrange
         setupSecurityContext();
-        String filePath = Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource("test.csv")).toURI()).toString();
-        when(contactReader.readFromFile(any())).thenReturn(List.of(testContact));
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(
+                "John,Doe,john.doe@example.com,+1234567890".getBytes(StandardCharsets.UTF_8));
+        when(contactReader.readFromStream(any())).thenReturn(List.of(testContact));
         when(contactDao.addContact(any(Contact.class))).thenReturn(1L);
-        when(contactDao.findExistingContact(any(), any(), any(), any())).thenReturn(Optional.empty());
+        when(contactDao.findExistingContact(anyLong(), any(), any(), any(), any())).thenReturn(Optional.empty());
 
         // Act
-        List<ResponseContactDto> result = contactService.saveAll(filePath);
+        List<ResponseContactDto> result = contactService.saveAll(inputStream);
 
         // Assert
         assertThat(result).hasSize(1);

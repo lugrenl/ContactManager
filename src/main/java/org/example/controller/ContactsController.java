@@ -9,13 +9,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.example.dto.ResponseContactDto;
+import org.example.dto.AdminContactDto;
+import org.example.dto.AppErrorResponse;
+import org.example.exceptions.InvalidCsvException;
 import org.example.service.ContactService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -30,56 +34,79 @@ public class ContactsController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(
         summary = "Get all contacts",
-        description = "Retrieves a list of all contacts in the system. Requires ADMIN role.",
+        description = "Retrieves all personal contacts with their owner IDs. Requires ADMIN role.",
         responses = {
             @ApiResponse(
                 responseCode = "200",
                 description = "Successfully retrieved list of contacts",
                 content = @Content(
                     mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    array = @ArraySchema(schema = @Schema(implementation = ResponseContactDto.class))
+                    array = @ArraySchema(schema = @Schema(implementation = AdminContactDto.class))
                 )
             ),
             @ApiResponse(
-                responseCode = "403",
-                description = "Access denied - requires ADMIN role"
+                responseCode = "401",
+                description = "Missing or invalid JWT, or insufficient role",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = AppErrorResponse.class)
+                )
             )
         }
     )
-    public List<ResponseContactDto> getAllContacts() {
+    public List<AdminContactDto> getAllContacts() {
         return contactService.getAllContacts();
     }
 
-    @PostMapping("/import")
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(
-        summary = "Import contacts from file",
-        description = "Imports contacts from a file located at the specified path. Requires USER or ADMIN role.",
+        summary = "Import contacts from CSV file",
+        description = "Uploads a CSV file and imports its contacts into the current user's address book. "
+                + "Requires USER or ADMIN role.",
         responses = {
             @ApiResponse(
                 responseCode = "200",
-                description = "Contacts imported successfully"
+                description = "Contacts imported successfully (empty body)"
             ),
             @ApiResponse(
                 responseCode = "400",
-                description = "File not found or error reading file"
+                description = "Empty file, invalid CSV content or unreadable upload",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = AppErrorResponse.class)
+                )
             ),
             @ApiResponse(
                 responseCode = "401",
-                description = "Access denied - requires USER or ADMIN role"
+                description = "Missing or invalid JWT, or insufficient role",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = AppErrorResponse.class)
+                )
+            ),
+            @ApiResponse(
+                responseCode = "413",
+                description = "Uploaded file exceeds the configured size limit",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = AppErrorResponse.class)
+                )
             )
         }
     )
     @ResponseStatus(HttpStatus.OK)
     public void saveAll(
         @Parameter(
-            name = "filePath",
-            description = "Absolute path to the file containing contacts",
-            required = true,
-            example = "C:/contacts/import.csv"
+            description = "CSV file with rows in the format name,surname,email,phoneNumber",
+            required = true
         )
-        @RequestParam("filePath") String filePath
+        @RequestPart("file") MultipartFile file
     ) {
-        contactService.saveAll(filePath);
+        try {
+            contactService.saveAll(file.getInputStream());
+        } catch (IOException e) {
+            throw new InvalidCsvException("Unable to read uploaded CSV file", e);
+        }
     }
 }

@@ -3,15 +3,15 @@ package org.example.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.Hibernate;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @ToString(exclude = "contacts")
-@EqualsAndHashCode(exclude = "contacts")
 @Entity
 @Table(name = "users")
 public class User {
@@ -25,7 +25,7 @@ public class User {
     @NotBlank(message = "Username is required")
     @NotEmpty(message = "Username should not be empty")
     @Size(min = 2, max = 20, message = "Username should be between 2 and 20 characters")
-    @Column(name = "name")
+    @Column(name = "name", unique = true)
     private String name;
 
     @NotBlank(message = "Password is required")
@@ -44,23 +44,35 @@ public class User {
     @Column(name = "role")
     private String role;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "user_contacts",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "contact_id")
-    )
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Contact> contacts = new HashSet<>();
-    
-    // Вспомогательный метод для двунаправленного связывания
+
     public void addContact(Contact contact) {
+        contact.setOwner(this);
         contacts.add(contact);
-        contact.getUsers().add(this);
     }
 
-    // Вспомогательный метод для двунаправленного удаления
     public void removeContact(Contact contact) {
         contacts.remove(contact);
-        contact.getUsers().remove(this);
+        if (this.equals(contact.getOwner())) {
+            contact.setOwner(null);
+        }
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) {
+            return false;
+        }
+        User user = (User) other;
+        return getId() != 0 && getId() == user.getId();
+    }
+
+    @Override
+    public int hashCode() {
+        return Hibernate.getClass(this).hashCode();
     }
 }
